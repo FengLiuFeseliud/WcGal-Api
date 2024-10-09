@@ -12,16 +12,37 @@ public class Article extends AbstractTimeEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "article_id", unique = true, nullable = false)
     private Long articleId;
+
     @Column(name = "article_title", nullable = false)
     private String articleTitle;
+
     @Column(name = "article_author", nullable = false)
     private String articleAuthor;
+
     @Column(name = "article_content", nullable = false)
     private String articleContent;
+
     @Column(nullable = false)
     private String cover;
-    @ColumnDefault("")
+
+    @ColumnDefault("\"\"")
     private String tags;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private Long favorites;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private Long likes;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private Long comments;
+
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private Long views;
 
     public Long getArticleId() {
         return articleId;
@@ -71,15 +92,35 @@ public class Article extends AbstractTimeEntity{
         this.cover = cover;
     }
 
-    @Override
-    public String toString() {
-        return "Article{" +
-                "articleId=" + articleId +
-                ", articleTitle='" + articleTitle + '\'' +
-                ", articleAuthor='" + articleAuthor + '\'' +
-                ", articleContent='" + articleContent + '\'' +
-                ", createTime=" + createTime +
-                ", updateTime=" + updateTime +
-                '}';
+    public Long getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Long favorites) {
+        this.favorites = favorites;
+    }
+
+    public Long getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Long likes) {
+        this.likes = likes;
+    }
+
+    public Long getComments() {
+        return comments;
+    }
+
+    public void setComments(Long comments) {
+        this.comments = comments;
+    }
+
+    public Long getViews() {
+        return views;
+    }
+
+    public void setViews(Long views) {
+        this.views = views;
     }
 }

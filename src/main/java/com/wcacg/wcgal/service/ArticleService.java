@@ -111,7 +111,6 @@ public class ArticleService implements IArticleService, IArticleTagService {
         String[] keywords = searchDto.getKeyword().split(" ");
 
         String key;
-
         BooleanExpression be = null;
         for (int index = 0; index < keywords.length; index++){
             key = keywords[index];

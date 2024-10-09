@@ -1,9 +1,11 @@
 package com.wcacg.wcgal.controller;
 
 
-import com.wcacg.wcgal.entity.dto.ArticleDto;
+import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.utils.PathUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,22 +17,57 @@ import java.util.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/img")
 public class ImgController {
 
-    @ResponseBody
-    @RequestMapping(value  = "/{fileName}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] get(@PathVariable String fileName) throws IOException {
+    private byte[] getImgByte(String fileName, int width, int height, float scale, float quality) throws IOException {
         File file = PathUtils.ImgPathFile(fileName);
         if (!file.exists()){
             return new byte[]{0};
         }
-        return new BufferedInputStream(new FileInputStream(file)).readAllBytes();
+
+        if ((width == 0 || height == 0) && scale == 0 && quality == 0) {
+            return new BufferedInputStream(new FileInputStream(file)).readAllBytes();
+        }
+
+        String[] fileStr = fileName.split("\\.");
+        if (fileStr.length == 1) {
+            return new BufferedInputStream(new FileInputStream(file)).readAllBytes();
+        }
+
+        File newFile = PathUtils.ImgPathFile(fileStr[0] + "_" + width + "x" + height + "_" + scale + "_" + quality + "." + fileStr[1]);
+        if (newFile.exists()){
+            return new BufferedInputStream(new FileInputStream(newFile)).readAllBytes();
+        }
+
+        Thumbnails.Builder<File> builder = Thumbnails.of(file);
+        if (width != 0 && height != 0){
+            builder.size(width, height);
+        } else if (scale != 0){
+            builder.scale(scale);
+        } else {
+            return new BufferedInputStream(new FileInputStream(file)).readAllBytes();
+        }
+
+        if (quality != 0){
+            builder.outputQuality(quality);
+        }
+
+        builder.toFile(newFile);
+        return new BufferedInputStream(new FileInputStream(newFile)).readAllBytes();
     }
 
-    @PostMapping("/upload")
-    public ResponseMessage<List<String>> upload(@RequestParam("file") MultipartFile[] files) throws IOException {
+    @ResponseBody
+    @RequestMapping(value  = "/{fileName}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] get(@PathVariable String fileName,
+                      @RequestParam(value = "width", required = false, defaultValue = "0") int width,
+                      @RequestParam(value = "height", required = false, defaultValue = "0") int height,
+                      @RequestParam(value = "scale", required = false, defaultValue = "0") float scale,
+                      @RequestParam(value = "quality", required = false, defaultValue = "0") float quality) throws IOException {
+        return this.getImgByte(fileName, width, height, scale, quality);
+    }
+
+    private ResponseMessage<List<String>> upload(MultipartFile[] files, String subPath) throws IOException {
         List<String> upload = new ArrayList<>();
 
         for (MultipartFile file : files){
@@ -41,12 +78,35 @@ public class ImgController {
         }
 
         for (MultipartFile file : files){
-            File newFile = PathUtils.ImgPathFile(file.getInputStream());
+            File newFile = PathUtils.ImgPathFile(file.getInputStream(), subPath);
             if (!newFile.exists()){
                 file.transferTo(newFile);
             }
-            upload.add("http://localhost:8080/img/" + newFile.getName());
+
+            upload.add("/img/" + subPath + newFile.getName());
         }
         return ResponseMessage.success(upload);
+    }
+
+    @NeedToken
+    @PostMapping("/upload")
+    public ResponseMessage<List<String>> upload(@RequestParam("file") MultipartFile[] files, HttpServletRequest request) throws IOException {
+        return this.upload(files, "");
+    }
+
+    @ResponseBody
+    @RequestMapping(value  = "/head/{fileName}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getHead(@PathVariable String fileName,
+                      @RequestParam(value = "width", required = false, defaultValue = "0") int width,
+                      @RequestParam(value = "height", required = false, defaultValue = "0") int height,
+                      @RequestParam(value = "scale", required = false, defaultValue = "0") float scale,
+                      @RequestParam(value = "quality", required = false, defaultValue = "0") float quality) throws IOException {
+        return this.getImgByte("/head/" + fileName, width, height, scale, quality);
+    }
+
+    @NeedToken
+    @PostMapping("/head/upload")
+    public ResponseMessage<List<String>> uploadHead(@RequestParam("file") MultipartFile[] files, HttpServletRequest request) throws IOException {
+        return this.upload(files, "/head/");
     }
 }

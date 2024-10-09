@@ -1,6 +1,7 @@
 package com.wcacg.wcgal.exception;
 
 import com.wcacg.wcgal.entity.message.ResponseMessage;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
@@ -34,5 +35,10 @@ public class RequestExceptionHandler {
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public ResponseMessage<?> sqlIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException exception) {
         return new ResponseMessage<>(HttpStatus.BAD_REQUEST.value(), "呜~ 不能为 " + exception.getMessage().split("'")[1] +" 啦", null);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseMessage<?> entityNotFoundException(EntityNotFoundException exception) {
+        return new ResponseMessage<>(HttpStatus.NOT_FOUND.value(), exception.getMessage(), null);
     }
 }
