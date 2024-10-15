@@ -1,12 +1,10 @@
 package com.wcacg.wcgal.entity.dto;
 
-import jakarta.persistence.Column;
+import com.wcacg.wcgal.entity.Comment;
+import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.tomcat.util.buf.StringUtils;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -15,7 +13,7 @@ public class ArticleDto {
     @NotBlank
     private String articleTitle;
     @NotBlank
-    private String articleAuthor;
+    private UserInfoDto articleAuthor;
     @NotBlank
     private String articleContent;
     @NotBlank
@@ -24,6 +22,11 @@ public class ArticleDto {
     private ArticleTagDto[] tagsData;
     protected Date createTime;
     protected Date updateTime;
+    private Long comments;
+    private Long likes;
+    private Long views;
+    private Long favorites;
+    private List<Comment> commentList;
 
     public Long getArticleId() {
         return articleId;
@@ -41,11 +44,11 @@ public class ArticleDto {
         this.articleTitle = articleTitle;
     }
 
-    public String getArticleAuthor() {
+    public @NotBlank UserInfoDto getArticleAuthor() {
         return articleAuthor;
     }
 
-    public void setArticleAuthor(String articleAuthor) {
+    public void setArticleAuthor(@NotBlank UserInfoDto articleAuthor) {
         this.articleAuthor = articleAuthor;
     }
 
@@ -95,5 +98,45 @@ public class ArticleDto {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public Long getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Long likes) {
+        this.likes = likes;
+    }
+
+    public Long getComments() {
+        return comments;
+    }
+
+    public void setComments(Long comments) {
+        this.comments = comments;
+    }
+
+    public Long getViews() {
+        return views;
+    }
+
+    public void setViews(Long views) {
+        this.views = views;
+    }
+
+    public Long getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Long favorites) {
+        this.favorites = favorites;
+    }
+
+    public List<Comment> getCommentList() {
+        return commentList;
+    }
+
+    public void setCommentList(List<Comment> commentList) {
+        this.commentList = commentList;
     }
 }

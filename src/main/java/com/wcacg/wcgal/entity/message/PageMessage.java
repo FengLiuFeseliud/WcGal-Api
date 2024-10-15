@@ -1,7 +1,5 @@
 package com.wcacg.wcgal.entity.message;
 
-import com.wcacg.wcgal.entity.Article;
-import com.wcacg.wcgal.entity.dto.ArticleDto;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 
@@ -13,7 +11,7 @@ public record PageMessage<T>(int code, String message, Long count, Integer pages
         return new PageMessage<>(HttpStatus.OK.value(), "请求成功!", data.getTotalElements(), data.getTotalPages(), data.stream());
     }
 
-    public static PageMessage<ArticleDto> success(Page<Article> pageData, List<ArticleDto> data) {
+    public static <T> PageMessage<T> success(Page<?> pageData, List<T> data) {
         return new PageMessage<>(HttpStatus.OK.value(), "请求成功!", pageData.getTotalElements(), pageData.getTotalPages(), data.stream());
     }
 

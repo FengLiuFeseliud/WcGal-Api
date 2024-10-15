@@ -10,7 +10,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -31,6 +32,10 @@ public class UserService {
     }
 
     private UserDto getUserDto(User user) {
+        if (user == null){
+            return null;
+        }
+
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(user, userDto);
         return userDto;
@@ -83,15 +88,15 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public UserDto getUser(UserRegisterDto userRegisterDto) {
-        return this.getUserDto(this.userRepository.findByUserName(userRegisterDto.getUserName()));
-    }
-
-    public User getUser(long userId) {
-        return this.userRepository.findById(userId).orElse(null);
+    public UserDto getUser(long userId) {
+        return this.getUserDto(this.userRepository.findById(userId).orElse(null));
     }
 
     public User getUserFormEmail(String email) {
         return this.userRepository.findByEmail(email);
+    }
+
+    public void setAdmin(long userId){
+
     }
 }

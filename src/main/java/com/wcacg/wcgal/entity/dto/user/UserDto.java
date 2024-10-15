@@ -2,6 +2,9 @@ package com.wcacg.wcgal.entity.dto.user;
 
 import java.util.Date;
 
+/**
+ * 用户详细信息
+ */
 public class UserDto {
     private long userId;
     private String userName;

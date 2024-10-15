@@ -1,9 +1,10 @@
 package com.wcacg.wcgal.controller;
 
+import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
-import com.wcacg.wcgal.entity.dto.*;
-
+import com.wcacg.wcgal.entity.dto.EmailDto;
+import com.wcacg.wcgal.entity.dto.ResetPasswordDto;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
 import com.wcacg.wcgal.entity.dto.user.UserLoginDto;
 import com.wcacg.wcgal.entity.dto.user.UserRegisterDto;
@@ -21,8 +22,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -36,6 +35,27 @@ public class UserController {
         this.mailSender = mailSender;
     }
 
+    /**
+     * 获取用户
+     * @param userId 用户 id
+     * @return 用户信息
+     */
+    @PostMapping("/{userId}")
+    public ResponseMessage<UserDto> getUser(@PathVariable Long userId, HttpServletRequest request){
+        long tokenUserId = TokenUtils.decodedTokenUserId(request);
+        UserDto userDto = this.userService.getUser(userId);
+        if (tokenUserId != userDto.getUserId()){
+            userDto.setEmail(null);
+        }
+        return ResponseMessage.success(userDto);
+    }
+
+    /**
+     * 发送验证码
+     * @param email 发送到邮箱
+     * @param session 验证码保存至 session 会话
+     * @return 响应状态消息
+     */
     @PostMapping("/code")
     public ResponseMessage<Null> code(@Validated @RequestBody EmailDto email, HttpSession session) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -51,6 +71,11 @@ public class UserController {
         return ResponseMessage.success(null);
     }
 
+    /**
+     * 用户登录
+     * @param userLoginDto 用户登录数据
+     * @return 用户信息带 token
+     */
     @PostMapping("/login")
     public ResponseMessage<UserDto> login(@Validated @RequestBody UserLoginDto userLoginDto) {
         UserDto user = this.userService.login(userLoginDto);
@@ -58,10 +83,17 @@ public class UserController {
             return ResponseMessage.dataError("登录失败... qwq", null);
         }
 
-        user.setToken(TokenUtils.getToken(7, user));
+        user.setToken(TokenUtils.getToken(1, user));
         return ResponseMessage.success(user);
     }
 
+    /**
+     * 用户注册
+     * @param userRegisterDto 用户注册数据
+     * @param session 从 session 会话获取验证码
+     * @param response 响应头
+     * @return 用户信息
+     */
     @PostMapping("/register")
     public ResponseMessage<UserDto> register(@Validated @RequestBody UserRegisterDto userRegisterDto, HttpSession session, HttpServletResponse response) {
         if (session.getAttribute("code") == null){
@@ -85,6 +117,26 @@ public class UserController {
         return ResponseMessage.success(this.userService.register(userRegisterDto));
     }
 
+    /**
+     * 重置用户 token
+     * @param request 请求头
+     * @return 用户信息带 token
+     */
+    @NeedToken
+    @PostMapping("/reset/token")
+    public ResponseMessage<UserDto> resetToken(HttpServletRequest request){
+        long userId = TokenUtils.decodedTokenUserId(request);
+        UserDto userDto = this.userService.getUser(userId);
+        userDto.setToken(TokenUtils.getToken(1, userDto));
+        return ResponseMessage.success(userDto);
+    }
+
+    /**
+     * 重设密码
+     * @param resetPasswordDto 重设密码数据
+     * @param session 从 session 会话获取验证码
+     * @return 响应状态消息
+     */
     @PostMapping("/reset/password")
     public ResponseMessage<Null> resetPassword(@Validated @RequestBody ResetPasswordDto resetPasswordDto, HttpSession session) {
         if (session.getAttribute("code") == null){
@@ -103,5 +155,12 @@ public class UserController {
 
         this.userService.resetPassword(user, resetPasswordDto.getPassword());
         return ResponseMessage.success(null);
+    }
+
+    @NeedToken
+    @NeedAdmin
+    @PostMapping("/admin/{userId}")
+    public ResponseMessage<Null> setAdmin(@PathVariable Long userId){
+        return null;
     }
 }

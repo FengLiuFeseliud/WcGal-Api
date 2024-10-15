@@ -1,21 +1,22 @@
 package com.wcacg.wcgal.entity.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 
 import java.util.Date;
 
 public class ArticleInfoDto{
     private Long articleId;
-    @NotBlank
     private String articleTitle;
-    @NotBlank
-    private String articleAuthor;
-    @NotBlank
+    private UserInfoDto articleAuthor;
     private String cover;
     private String[] tags;
     private ArticleTagDto[] tagsData;
     protected Date createTime;
     protected Date updateTime;
+    private Long comments;
+    private Long likes;
+    private Long views;
+    private Long favorites;
 
     public ArticleInfoDto() {}
 
@@ -79,11 +80,43 @@ public class ArticleInfoDto{
         this.updateTime = updateTime;
     }
 
-    public @NotBlank String getArticleAuthor() {
+    public UserInfoDto getArticleAuthor() {
         return articleAuthor;
     }
 
-    public void setArticleAuthor(@NotBlank String articleAuthor) {
+    public void setArticleAuthor(UserInfoDto articleAuthor) {
         this.articleAuthor = articleAuthor;
+    }
+
+    public Long getComments() {
+        return comments;
+    }
+
+    public void setComments(Long comments) {
+        this.comments = comments;
+    }
+
+    public Long getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Long likes) {
+        this.likes = likes;
+    }
+
+    public Long getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Long favorites) {
+        this.favorites = favorites;
+    }
+
+    public Long getViews() {
+        return views;
+    }
+
+    public void setViews(Long views) {
+        this.views = views;
     }
 }

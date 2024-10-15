@@ -16,6 +16,10 @@ public record ResponseMessage<T>(int code, String message, T data) implements IM
         return new ResponseMessage<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "请求错误...", null);
     }
 
+    public static <T> ResponseMessage<T> notFound(String message) {
+        return new ResponseMessage<>(HttpStatus.NOT_FOUND.value(), message, null);
+    }
+
     @Override
     public Integer getCode() {
         return code;

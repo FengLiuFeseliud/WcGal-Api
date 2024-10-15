@@ -1,13 +1,15 @@
 package com.wcacg.wcgal.controller;
 
-import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.Article;
 import com.wcacg.wcgal.entity.ArticleTags;
+import com.wcacg.wcgal.entity.Comment;
 import com.wcacg.wcgal.entity.dto.*;
 import com.wcacg.wcgal.entity.message.PageMessage;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.service.ArticleService;
+import com.wcacg.wcgal.utils.TokenUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Null;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +20,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/galgame")
 public class GalGameArticleController {
-     private final ArticleService service;
+
+    private final ArticleService service;
 
     public GalGameArticleController(ArticleService service) {
         this.service = service;
@@ -30,12 +33,22 @@ public class GalGameArticleController {
      * @return 文章
      */
     @PostMapping("/{articleId}")
-    public ResponseMessage<ArticleDto> get(@PathVariable Long articleId){
+    public ResponseMessage<ArticleDto> get(@PathVariable Long articleId, HttpServletRequest request){
         Article article = service.getArticle(articleId);
         if (article == null) {
             return ResponseMessage.dataError("文章id " + articleId + " 不存在... qwq", null);
         }
         return ResponseMessage.success(service.findArticleTagsToArticleDto(article));
+    }
+
+    @NeedToken
+    @PostMapping("/comment/{articleId}")
+    public ResponseMessage<Comment> comment(@PathVariable Long articleId, @Validated @RequestBody CommentDto commentDto, HttpServletRequest request){
+        Article article = service.getArticle(articleId);
+        if (article == null) {
+            return ResponseMessage.dataError("文章id " + articleId + " 不存在... qwq", null);
+        }
+        return ResponseMessage.success(service.comment(article, commentDto, TokenUtils.decodedTokenUserId(request)));
     }
 
     /**
@@ -45,8 +58,8 @@ public class GalGameArticleController {
      */
     @NeedToken
     @PostMapping("/add")
-    public ResponseMessage<Article> add(@Validated @RequestBody ArticleDto articleDto){
-        return ResponseMessage.success(service.addArticle(articleDto));
+    public ResponseMessage<Article> add(@Validated @RequestBody ArticleAddDto articleDto, HttpServletRequest request){
+        return ResponseMessage.success(service.addArticle(articleDto, TokenUtils.decodedTokenUserId(request)));
     }
 
     /**
@@ -81,7 +94,7 @@ public class GalGameArticleController {
      * @return 文章列表
      */
     @PostMapping("/list")
-    public PageMessage<ArticleDto> list(@Validated @RequestBody PageDto pageDto){
+    public PageMessage<ArticleInfoDto> list(@Validated @RequestBody PageDto pageDto){
         Page<Article> page = service.getArticles(pageDto);
         return PageMessage.success(page, service.findArticleTagsToArticleDtoList(page));
     }
@@ -92,7 +105,7 @@ public class GalGameArticleController {
      * @return 文章列表
      */
     @PostMapping("/search")
-    public PageMessage<ArticleDto> search(@Validated @RequestBody SearchDto pageDto){
+    public PageMessage<ArticleInfoDto> search(@Validated @RequestBody SearchDto pageDto){
         Page<Article> page = service.searchArticles(pageDto);
         return PageMessage.success(page, service.findArticleTagsToArticleDtoList(page));
     }
@@ -102,6 +115,10 @@ public class GalGameArticleController {
         return ResponseMessage.success(null);
     }
 
+    /**
+     * 文章计数
+     * @return 文章数
+     */
     @PostMapping("/count")
     public ResponseMessage<Long> count(){
         return ResponseMessage.success(this.service.getCount());

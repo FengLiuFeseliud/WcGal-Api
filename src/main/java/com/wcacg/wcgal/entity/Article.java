@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "tb_article")
 @EntityListeners(AuditingEntityListener.class)
@@ -16,14 +19,22 @@ public class Article extends AbstractTimeEntity{
     @Column(name = "article_title", nullable = false)
     private String articleTitle;
 
-    @Column(name = "article_author", nullable = false)
-    private String articleAuthor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "article_author_id", referencedColumnName = "user_id", nullable = false)
+    private User articleAuthor;
 
-    @Column(name = "article_content", nullable = false)
+    @Lob
+    @Column(name = "article_content", nullable = false, columnDefinition="longtext")
     private String articleContent;
 
     @Column(nullable = false)
     private String cover;
+
+    @Column(name ="cover_width", nullable = false)
+    private Integer coverWidth;
+
+    @Column(name ="cover_high", nullable = false)
+    private Integer coverHigh;
 
     @ColumnDefault("\"\"")
     private String tags;
@@ -44,6 +55,10 @@ public class Article extends AbstractTimeEntity{
     @Column(nullable = false)
     private Long views;
 
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tb_article_comment")
+    private List<Comment> commentList = new ArrayList<>();
+
     public Long getArticleId() {
         return articleId;
     }
@@ -60,11 +75,11 @@ public class Article extends AbstractTimeEntity{
         this.articleTitle = articleTitle;
     }
 
-    public String getArticleAuthor() {
+    public User getArticleAuthor() {
         return articleAuthor;
     }
 
-    public void setArticleAuthor(String articleAuthor) {
+    public void setArticleAuthor(User articleAuthor) {
         this.articleAuthor = articleAuthor;
     }
 
@@ -90,6 +105,22 @@ public class Article extends AbstractTimeEntity{
 
     public void setCover(String cover) {
         this.cover = cover;
+    }
+
+    public Integer getCoverWidth() {
+        return coverWidth;
+    }
+
+    public void setCoverWidth(Integer coverWidth) {
+        this.coverWidth = coverWidth;
+    }
+
+    public Integer getCoverHigh() {
+        return coverHigh;
+    }
+
+    public void setCoverHigh(Integer coverHigh) {
+        this.coverHigh = coverHigh;
     }
 
     public Long getFavorites() {
@@ -122,5 +153,17 @@ public class Article extends AbstractTimeEntity{
 
     public void setViews(Long views) {
         this.views = views;
+    }
+
+    public List<Comment> getCommentList() {
+        return commentList;
+    }
+
+    public void setCommentList(List<Comment> commentList) {
+        this.commentList = commentList;
+    }
+
+    public void addComment(Comment comment) {
+        this.commentList.add(comment);
     }
 }

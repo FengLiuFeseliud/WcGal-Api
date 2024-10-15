@@ -3,6 +3,9 @@ package com.wcacg.wcgal.entity.dto.user;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * 用户注册信息
+ */
 public class UserRegisterDto {
     @NotBlank
     private String userName;
