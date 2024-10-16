@@ -22,6 +22,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -83,7 +85,7 @@ public class UserController {
             return ResponseMessage.dataError("登录失败... qwq", null);
         }
 
-        user.setToken(TokenUtils.getToken(1, user));
+        user.setToken(TokenUtils.getToken(120, user));
         return ResponseMessage.success(user);
     }
 
@@ -118,17 +120,20 @@ public class UserController {
     }
 
     /**
-     * 重置用户 token
+     * 获取 token 用户信息
      * @param request 请求头
-     * @return 用户信息带 token
+     * @return 用户信息带
      */
     @NeedToken
-    @PostMapping("/reset/token")
-    public ResponseMessage<UserDto> resetToken(HttpServletRequest request){
-        long userId = TokenUtils.decodedTokenUserId(request);
-        UserDto userDto = this.userService.getUser(userId);
-        userDto.setToken(TokenUtils.getToken(1, userDto));
-        return ResponseMessage.success(userDto);
+    @PostMapping("/info")
+    public ResponseMessage<UserDto> resetToken(HttpServletRequest request, HttpServletResponse  response){
+        Map<String, String> tokenData = TokenUtils.decodedToken(request);
+        UserDto user = this.userService.getUser(Long.parseLong(tokenData.get("user_id")));
+        if (user.isAdmin() != Boolean.parseBoolean(tokenData.get("admin"))){
+            response.setHeader("Access-Control-Expose-Headers", "token");
+            response.setHeader("token", TokenUtils.getToken(120, user));
+        }
+        return ResponseMessage.success(this.userService.getUser(TokenUtils.decodedTokenUserId(request)));
     }
 
     /**
@@ -157,10 +162,25 @@ public class UserController {
         return ResponseMessage.success(null);
     }
 
-    @NeedToken
     @NeedAdmin
-    @PostMapping("/admin/{userId}")
-    public ResponseMessage<Null> setAdmin(@PathVariable Long userId){
-        return null;
+    @NeedToken
+    @PostMapping("/admin/set/{userId}")
+    public ResponseMessage<UserDto> setAdmin(@PathVariable Long userId){
+        User user = this.userService.getUserFill(userId);
+        if (user == null) {
+            return ResponseMessage.dataError("不存在的用户... qwq", null);
+        }
+        return ResponseMessage.success(this.userService.setAdmin(user, true));
+    }
+
+    @NeedAdmin
+    @NeedToken
+    @PostMapping("/admin/undo/{userId}")
+    public ResponseMessage<UserDto> undoAdmin(@PathVariable Long userId){
+        User user = this.userService.getUserFill(userId);
+        if (user == null) {
+            return ResponseMessage.dataError("不存在的用户... qwq", null);
+        }
+        return ResponseMessage.success(this.userService.setAdmin(user, false));
     }
 }

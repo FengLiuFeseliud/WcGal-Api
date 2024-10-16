@@ -92,11 +92,16 @@ public class UserService {
         return this.getUserDto(this.userRepository.findById(userId).orElse(null));
     }
 
+    public User getUserFill(long userId) {
+        return this.userRepository.findById(userId).orElse(null);
+    }
+
     public User getUserFormEmail(String email) {
         return this.userRepository.findByEmail(email);
     }
 
-    public void setAdmin(long userId){
-
+    public UserDto setAdmin(User user, boolean setIn){
+        user.setAdmin(setIn);
+        return this.getUserDto(this.userRepository.save(user));
     }
 }

@@ -10,13 +10,9 @@ import java.util.List;
 
 public class ArticleDto {
     private Long articleId;
-    @NotBlank
     private String articleTitle;
-    @NotBlank
     private UserInfoDto articleAuthor;
-    @NotBlank
     private String articleContent;
-    @NotBlank
     private String cover;
     private String[] tags;
     private ArticleTagDto[] tagsData;

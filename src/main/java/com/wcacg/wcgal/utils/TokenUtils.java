@@ -14,12 +14,12 @@ import java.util.Map;
 public class TokenUtils {
     private static final String tokenKey = "token";
 
-    public static String getToken(int expiresDay, UserDto user) {
+    public static String getToken(int expiresMinute, UserDto user) {
         return JWT.create()
                 .withClaim("user_id", user.getUserId())
                 .withClaim("user_name", user.getUserName())
                 .withClaim("admin", user.isAdmin())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * expiresDay))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 1000L * 60 * expiresMinute))
                 .sign(Algorithm.HMAC256(tokenKey));
     }
 
@@ -29,7 +29,12 @@ public class TokenUtils {
         map.put("user_id", jwt.getClaim("user_id").toString());
         map.put("user_name", jwt.getClaim("user_name").asString());
         map.put("admin", jwt.getClaim("admin").toString());
+        map.put("exp", jwt.getClaim("exp").toString());
         return map;
+    }
+
+    public static Map<String, String> decodedToken(HttpServletRequest request) throws JWTVerificationException {
+        return TokenUtils.decodedToken(request.getHeader("token"));
     }
 
     public static long decodedTokenUserId(HttpServletRequest request) throws JWTVerificationException {

@@ -52,25 +52,25 @@ public class GalGameArticleController {
     }
 
     /**
-     * 上传更新文章, 传入文章 id 将更新文章
+     * 上传文章
      * @param articleDto 文章内容
      * @return 文章
      */
     @NeedToken
     @PostMapping("/add")
-    public ResponseMessage<Article> add(@Validated @RequestBody ArticleAddDto articleDto, HttpServletRequest request){
+    public ResponseMessage<ArticleDto> add(@Validated @RequestBody ArticleAddDto articleDto, HttpServletRequest request){
         return ResponseMessage.success(service.addArticle(articleDto, TokenUtils.decodedTokenUserId(request)));
     }
 
     /**
-     * 上传更新文章, 传入文章 id 将更新文章
+     * 更新文章
      * @param articleDto 文章内容
      * @return 文章
      */
     @NeedToken
     @PostMapping("/update")
-    public ResponseMessage<Article> update(@Validated @RequestBody ArticleDto articleDto){
-        Article article = service.updateArticle(articleDto);
+    public ResponseMessage<ArticleDto> update(@Validated @RequestBody ArticleAddDto articleDto){
+        ArticleDto article = service.updateArticle(articleDto);
         if (article == null) {
             return ResponseMessage.dataError("文章 id 错误了...", null);
         }

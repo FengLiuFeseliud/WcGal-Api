@@ -30,12 +30,6 @@ public class Article extends AbstractTimeEntity{
     @Column(nullable = false)
     private String cover;
 
-    @Column(name ="cover_width", nullable = false)
-    private Integer coverWidth;
-
-    @Column(name ="cover_high", nullable = false)
-    private Integer coverHigh;
-
     @ColumnDefault("\"\"")
     private String tags;
 
@@ -105,22 +99,6 @@ public class Article extends AbstractTimeEntity{
 
     public void setCover(String cover) {
         this.cover = cover;
-    }
-
-    public Integer getCoverWidth() {
-        return coverWidth;
-    }
-
-    public void setCoverWidth(Integer coverWidth) {
-        this.coverWidth = coverWidth;
-    }
-
-    public Integer getCoverHigh() {
-        return coverHigh;
-    }
-
-    public void setCoverHigh(Integer coverHigh) {
-        this.coverHigh = coverHigh;
     }
 
     public Long getFavorites() {

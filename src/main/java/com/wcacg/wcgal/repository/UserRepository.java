@@ -13,5 +13,4 @@ public interface UserRepository extends CrudRepository<User, Long>, PagingAndSor
 
     User findByUserName(String username);
     User findByEmail(String email);
-
 }

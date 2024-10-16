@@ -1,10 +1,7 @@
 package com.wcacg.wcgal.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.wcacg.wcgal.entity.Article;
-import com.wcacg.wcgal.entity.Comment;
-import com.wcacg.wcgal.entity.QArticle;
-import com.wcacg.wcgal.entity.User;
+import com.wcacg.wcgal.entity.*;
 import com.wcacg.wcgal.entity.dto.*;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 import com.wcacg.wcgal.repository.ArticleRepository;
@@ -19,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Service
 public class ArticleService implements IArticleService, IArticleTagService {
@@ -32,27 +31,30 @@ public class ArticleService implements IArticleService, IArticleTagService {
         this.commentRepository = commentRepository;
     }
 
-    private List<String> tagsToTagsList(ArticleDto articleDto){
-        return Arrays.stream(articleDto.getTags() != null? articleDto.getTags().split(","): new String[]{}).toList();
+    private ArticleDto articleToArticleDto(Article article){
+        ArticleDto articleDto = new ArticleDto();
+        BeanUtils.copyProperties(article, articleDto);
+        return articleDto;
     }
 
     @Override
-    public Article addArticle(ArticleAddDto articleDto, long userId) {
+    public ArticleDto addArticle(ArticleAddDto articleDto, long userId) {
         this.countTags(new TagsDto(Arrays.asList(articleDto.getTags())));
-        Article articleEntity = new Article();
-        BeanUtils.copyProperties(articleDto, articleEntity);
-        articleEntity.setArticleAuthor(new User(userId));
-        articleEntity.setComments(0L);
-        articleEntity.setLikes(0L);
-        articleEntity.setViews(0L);
-        articleEntity.setFavorites(0L);
-        articleEntity.setTags(String.join(",", articleDto.getTags()));
-        return articleRepository.save(articleEntity);
+        Article article = new Article();
+        BeanUtils.copyProperties(articleDto, article);
+        article.setArticleId(null);
+        article.setArticleAuthor(new User(userId));
+        article.setComments(0L);
+        article.setLikes(0L);
+        article.setViews(0L);
+        article.setFavorites(0L);
+        article.setTags(String.join(",", articleDto.getTags()));
+        return this.articleToArticleDto(articleRepository.save(article));
     }
 
     @Override
-    public Article updateArticle(ArticleDto articleDto) {
-        if (articleDto.getArticleId() == null){
+    public ArticleDto updateArticle(ArticleAddDto articleDto) {
+        if (articleDto.getArticleId() == null || articleDto.getArticleId() == 0){
             return null;
         }
 
@@ -61,11 +63,14 @@ public class ArticleService implements IArticleService, IArticleTagService {
             return null;
         }
 
-        this.addArticleTag(new TagsDto(this.tagsToTagsList(articleDto)));
-        Article articleEntity = new Article();
-        BeanUtils.copyProperties(articleDto, articleEntity);
-        articleEntity.setArticleId(article.getArticleId());
-        return articleRepository.save(articleEntity);
+        this.addArticleTag(new TagsDto(Arrays.stream(
+                articleDto.getTags() != null? articleDto.getTags(): new String[]{}).toList()));
+        article.setArticleTitle(articleDto.getArticleTitle());
+        article.setArticleContent(articleDto.getArticleContent());
+        article.setCover(articleDto.getCover());
+        article.setTags(String.join(",", articleDto.getTags()));
+        article.setUpdateTime(null);
+        return this.articleToArticleDto(articleRepository.save(article));
     }
 
     @Override
@@ -74,24 +79,16 @@ public class ArticleService implements IArticleService, IArticleTagService {
         return articleId;
     }
 
-    public ArticleDto findArticleTagsToArticleDto(Article article) {
-        String[] tags = article.getTags().split(",");
-
+    public ArticleDto toArticleDto(Article article, Stream<ArticleTags> tags) {
         ArticleDto articleDto = new ArticleDto();
         BeanUtils.copyProperties(article, articleDto);
-        articleDto.setTags(tags);
 
         UserInfoDto userDto = new UserInfoDto();
         BeanUtils.copyProperties(article.getArticleAuthor(), userDto);
         articleDto.setArticleAuthor(userDto);
 
-        if (tags.length == 0){
-            articleDto.setTagsData(new ArticleTagDto[]{});
-            return articleDto;
-        }
-
         List<ArticleTagDto> articleTagsDtoList = new ArrayList<>();
-        this.getArticleTagsByTagNames(tags).forEach(articleTag -> {
+        tags.forEach(articleTag -> {
             ArticleTagDto articleTagsDto = new ArticleTagDto();
             BeanUtils.copyProperties(articleTag, articleTagsDto);
             articleTagsDtoList.add(articleTagsDto);
@@ -100,11 +97,22 @@ public class ArticleService implements IArticleService, IArticleTagService {
         return articleDto;
     }
 
+    public ArticleDto findArticleTagsToArticleDto(Article article){
+        return this.toArticleDto(article, StreamSupport.stream(
+                this.getArticleTagsByTagNames(article.getTags().split(",")).spliterator(), false));
+    }
+
     public List<ArticleInfoDto> findArticleTagsToArticleDtoList(Page<Article> articlePage) {
         List<ArticleInfoDto> articleDtoList = new ArrayList<>();
+        List<String> allTagNames = new ArrayList<>();
+
+        articlePage.forEach(article -> allTagNames.addAll(List.of(article.getTags().split(","))));
+        List<ArticleTags> allTags = (List<ArticleTags>) this.getArticleTagsByTagNames(allTagNames.toArray(new String[0]));
         articlePage.forEach(article -> {
             ArticleInfoDto articleInfoDto = new ArticleInfoDto();
-            BeanUtils.copyProperties(findArticleTagsToArticleDto(article), articleInfoDto);
+            List<String> tagNames = List.of(article.getTags().split(","));
+            BeanUtils.copyProperties(toArticleDto(article,
+                    allTags.stream().filter(tag -> tagNames.contains(tag.getTagName()))), articleInfoDto);
             articleDtoList.add(articleInfoDto);
         });
         return articleDtoList;
@@ -131,10 +139,10 @@ public class ArticleService implements IArticleService, IArticleTagService {
 
         String key;
         BooleanExpression be = null;
-        for (int index = 0; index < keywords.length; index++){
-            key = keywords[index];
-            if (key.startsWith("#")){
-                if (be == null){
+        for (String keyword : keywords) {
+            key = keyword;
+            if (key.startsWith("#")) {
+                if (be == null) {
                     be = qArticle.tags.contains(key.replace("#", ""));
                     continue;
                 }
@@ -142,8 +150,8 @@ public class ArticleService implements IArticleService, IArticleTagService {
                 continue;
             }
 
-            if(key.startsWith("@")){
-                if (be == null){
+            if (key.startsWith("@")) {
+                if (be == null) {
                     be = qArticle.articleAuthor.userName.eq(key.replace("@", ""));
                     continue;
                 }
@@ -151,7 +159,7 @@ public class ArticleService implements IArticleService, IArticleTagService {
                 continue;
             }
 
-            if (be == null){
+            if (be == null) {
                 be = qArticle.articleTitle.contains(key);
             } else {
                 be = be.and(qArticle.articleTitle.contains(key));

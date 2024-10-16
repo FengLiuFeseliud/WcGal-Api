@@ -3,6 +3,7 @@ package com.wcacg.wcgal.entity.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public class ArticleAddDto {
+    private Long articleId;
     @NotBlank
     private String articleTitle;
     @NotBlank
@@ -10,6 +11,14 @@ public class ArticleAddDto {
     @NotBlank
     private String cover;
     private String[] tags;
+
+    public Long getArticleId() {
+        return articleId;
+    }
+
+    public void setArticleId(Long articleId) {
+        this.articleId = articleId;
+    }
 
     public String[] getTags() {
         return tags;
