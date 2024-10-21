@@ -1,9 +1,9 @@
 package com.wcacg.wcgal.service;
 
 import com.wcacg.wcgal.entity.Article;
-import com.wcacg.wcgal.entity.dto.ArticleAddDto;
-import com.wcacg.wcgal.entity.dto.ArticleDto;
 import com.wcacg.wcgal.entity.dto.PageDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleAddDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleDto;
 import org.springframework.data.domain.Page;
 
 public interface IArticleService {

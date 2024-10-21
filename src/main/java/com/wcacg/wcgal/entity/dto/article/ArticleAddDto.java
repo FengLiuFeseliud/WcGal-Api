@@ -1,4 +1,4 @@
-package com.wcacg.wcgal.entity.dto;
+package com.wcacg.wcgal.entity.dto.article;
 
 import jakarta.validation.constraints.NotBlank;
 

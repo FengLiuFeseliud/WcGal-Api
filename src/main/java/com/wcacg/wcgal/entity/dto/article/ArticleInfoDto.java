@@ -1,5 +1,6 @@
-package com.wcacg.wcgal.entity.dto;
+package com.wcacg.wcgal.entity.dto.article;
 
+import com.wcacg.wcgal.entity.dto.ArticleTagDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 
 import java.util.Date;

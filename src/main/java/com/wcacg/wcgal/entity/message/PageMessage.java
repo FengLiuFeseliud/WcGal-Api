@@ -15,6 +15,10 @@ public record PageMessage<T>(int code, String message, Long count, Integer pages
         return new PageMessage<>(HttpStatus.OK.value(), "请求成功!", pageData.getTotalElements(), pageData.getTotalPages(), data.stream());
     }
 
+    public static <T> PageMessage<T> dataError(String message, T data) {
+        return new PageMessage<>(HttpStatus.BAD_REQUEST.value(), message, null, null, null);
+    }
+
     @Override
     public Integer getCode() {
         return code;

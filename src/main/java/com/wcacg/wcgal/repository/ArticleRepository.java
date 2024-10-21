@@ -10,6 +10,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ArticleRepository extends CrudRepository<Article, Long>, PagingAndSortingRepository<Article, Long>,
         QuerydslPredicateExecutor<Article> {
-
-
 }

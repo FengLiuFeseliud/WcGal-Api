@@ -4,9 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "tb_article")
 @EntityListeners(AuditingEntityListener.class)
@@ -48,10 +45,6 @@ public class Article extends AbstractTimeEntity{
     @ColumnDefault("0")
     @Column(nullable = false)
     private Long views;
-
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "tb_article_comment")
-    private List<Comment> commentList = new ArrayList<>();
 
     public Long getArticleId() {
         return articleId;
@@ -131,17 +124,5 @@ public class Article extends AbstractTimeEntity{
 
     public void setViews(Long views) {
         this.views = views;
-    }
-
-    public List<Comment> getCommentList() {
-        return commentList;
-    }
-
-    public void setCommentList(List<Comment> commentList) {
-        this.commentList = commentList;
-    }
-
-    public void addComment(Comment comment) {
-        this.commentList.add(comment);
     }
 }

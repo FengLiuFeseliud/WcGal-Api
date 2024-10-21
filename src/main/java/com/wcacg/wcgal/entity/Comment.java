@@ -2,9 +2,8 @@ package com.wcacg.wcgal.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.util.List;
 
 @Entity
 @Table(name = "tb_comment")
@@ -15,17 +14,21 @@ public class Comment extends AbstractTimeEntity {
     @Column(name = "comment_id", unique = true, nullable = false)
     private Long commentId;
 
-    @Column(nullable = false)
-    private String comment;
+    @Column(name = "resource_id", nullable = false)
+    private String resourceId;
 
-    @ManyToOne
-    @JoinColumn(name = "comment_author_id", referencedColumnName = "user_id")
+    @Lob
+    @Column(nullable = false, columnDefinition = "mediumtext")
+    private String content;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "comment_author_id", referencedColumnName = "user_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User commentAuthor;
 
-    @OneToMany
-    @JoinTable(name = "tb_sub_comment")
-    private List<Comment> subCommentList;
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private Long likes;
 
     public Long getCommentId() {
         return commentId;
@@ -35,12 +38,20 @@ public class Comment extends AbstractTimeEntity {
         this.commentId = commentId;
     }
 
-    public String getComment() {
-        return comment;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public User getCommentAuthor() {
@@ -51,11 +62,11 @@ public class Comment extends AbstractTimeEntity {
         this.commentAuthor = commentAuthor;
     }
 
-    public List<Comment> getSubCommentList() {
-        return subCommentList;
+    public Long getLikes() {
+        return likes;
     }
 
-    public void setSubCommentList(List<Comment> subCommentList) {
-        this.subCommentList = subCommentList;
+    public void setLikes(Long likes) {
+        this.likes = likes;
     }
 }

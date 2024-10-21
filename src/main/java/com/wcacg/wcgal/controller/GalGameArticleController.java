@@ -3,8 +3,11 @@ package com.wcacg.wcgal.controller;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.Article;
 import com.wcacg.wcgal.entity.ArticleTags;
-import com.wcacg.wcgal.entity.Comment;
-import com.wcacg.wcgal.entity.dto.*;
+import com.wcacg.wcgal.entity.dto.PageDto;
+import com.wcacg.wcgal.entity.dto.SearchDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleAddDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleInfoDto;
 import com.wcacg.wcgal.entity.message.PageMessage;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.service.ArticleService;
@@ -20,7 +23,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/galgame")
 public class GalGameArticleController {
-
     private final ArticleService service;
 
     public GalGameArticleController(ArticleService service) {
@@ -39,16 +41,6 @@ public class GalGameArticleController {
             return ResponseMessage.dataError("文章id " + articleId + " 不存在... qwq", null);
         }
         return ResponseMessage.success(service.findArticleTagsToArticleDto(article));
-    }
-
-    @NeedToken
-    @PostMapping("/comment/{articleId}")
-    public ResponseMessage<Comment> comment(@PathVariable Long articleId, @Validated @RequestBody CommentDto commentDto, HttpServletRequest request){
-        Article article = service.getArticle(articleId);
-        if (article == null) {
-            return ResponseMessage.dataError("文章id " + articleId + " 不存在... qwq", null);
-        }
-        return ResponseMessage.success(service.comment(article, commentDto, TokenUtils.decodedTokenUserId(request)));
     }
 
     /**

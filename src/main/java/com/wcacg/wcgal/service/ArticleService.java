@@ -1,12 +1,20 @@
 package com.wcacg.wcgal.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.wcacg.wcgal.entity.*;
-import com.wcacg.wcgal.entity.dto.*;
+import com.wcacg.wcgal.entity.Article;
+import com.wcacg.wcgal.entity.ArticleTags;
+import com.wcacg.wcgal.entity.QArticle;
+import com.wcacg.wcgal.entity.User;
+import com.wcacg.wcgal.entity.dto.ArticleTagDto;
+import com.wcacg.wcgal.entity.dto.PageDto;
+import com.wcacg.wcgal.entity.dto.SearchDto;
+import com.wcacg.wcgal.entity.dto.TagsDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleAddDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleDto;
+import com.wcacg.wcgal.entity.dto.article.ArticleInfoDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 import com.wcacg.wcgal.repository.ArticleRepository;
 import com.wcacg.wcgal.repository.ArticleTagsRepository;
-import com.wcacg.wcgal.repository.CommentRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +31,10 @@ import java.util.stream.StreamSupport;
 public class ArticleService implements IArticleService, IArticleTagService {
     private final ArticleRepository articleRepository;
     private final ArticleTagsRepository articleTagsRepository;
-    private final CommentRepository commentRepository;
 
-    public ArticleService(ArticleRepository articleRepository, ArticleTagsRepository articleTagsRepository, CommentRepository commentRepository) {
+    public ArticleService(ArticleRepository articleRepository, ArticleTagsRepository articleTagsRepository) {
         this.articleRepository = articleRepository;
         this.articleTagsRepository = articleTagsRepository;
-        this.commentRepository = commentRepository;
     }
 
     private ArticleDto articleToArticleDto(Article article){
@@ -177,7 +183,6 @@ public class ArticleService implements IArticleService, IArticleTagService {
                 Sort.by(searchDto.getDesc() ? Sort.Direction.DESC: Sort.Direction.ASC, "articleId")));
     }
 
-
     @Override
     public Long getCount(){
         return articleRepository.count();
@@ -188,13 +193,4 @@ public class ArticleService implements IArticleService, IArticleTagService {
         return this.articleTagsRepository;
     }
 
-    public Comment comment(Article article, CommentDto commentDto, long userId) {
-        Comment comment = new Comment();
-        comment.setComment(commentDto.getComment());
-        comment.setCommentAuthor(new User(userId));
-        article.addComment(comment);
-        comment = commentRepository.save(comment);
-        articleRepository.save(article);
-        return comment;
-    }
 }

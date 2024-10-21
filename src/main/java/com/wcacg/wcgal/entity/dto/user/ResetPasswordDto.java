@@ -1,8 +1,9 @@
-package com.wcacg.wcgal.entity.dto;
+package com.wcacg.wcgal.entity.dto.user;
 
+import com.wcacg.wcgal.entity.dto.EmailDto;
 import jakarta.validation.constraints.NotBlank;
 
-public class ResetPasswordDto extends EmailDto{
+public class ResetPasswordDto extends EmailDto {
     @NotBlank
     private String password;
 

@@ -4,7 +4,7 @@ import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.EmailDto;
-import com.wcacg.wcgal.entity.dto.ResetPasswordDto;
+import com.wcacg.wcgal.entity.dto.user.ResetPasswordDto;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
 import com.wcacg.wcgal.entity.dto.user.UserLoginDto;
 import com.wcacg.wcgal.entity.dto.user.UserRegisterDto;
