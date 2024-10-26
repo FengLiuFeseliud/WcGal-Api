@@ -5,6 +5,7 @@ import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
 import com.wcacg.wcgal.entity.dto.user.UserLoginDto;
 import com.wcacg.wcgal.entity.dto.user.UserRegisterDto;
+import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.UserRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.BeanUtils;
@@ -15,12 +16,6 @@ import java.util.UUID;
 
 @Service
 public class UserService {
-    public enum RegisterType{
-        UserNameError,
-        EmailError,
-        Ok;
-    }
-
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -33,45 +28,47 @@ public class UserService {
 
     private UserDto getUserDto(User user) {
         if (user == null){
-            return null;
+            throw new ClientError.NotFindException("不存在的用户... qwq");
         }
 
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(user, userDto);
+        if (user.getFavorites() != null){
+            user.getFavorites().forEach(favorite ->
+                    userDto.getFavorites().add(FavoriteService.favoriteToFavoriteDto(favorite)));
+        }
         return userDto;
     }
 
     public UserDto login(UserLoginDto userLoginDto) {
         User user = this.userRepository.findByEmail(userLoginDto.getEmail());
         if (user == null) {
-            return null;
+            throw new ClientError.NotFindException("不存在的用户... qwq");
         }
 
         if (!Objects.equals(user.getPassword(), this.strMd5(userLoginDto.getPassword(), user.getSalt()))) {
-            return null;
+            throw new ClientError.NotPermissionsException("密码错误... qwq");
         }
+
+        user.setFavorites(null);
         return this.getUserDto(user);
     }
 
-    public RegisterType canRegister(UserRegisterDto userRegisterDto) {
+    public UserDto register(UserRegisterDto userRegisterDto) {
         QUser qUser = QUser.user;
         Iterable<User> users = this.userRepository.findAll(
                 qUser.userName.eq(userRegisterDto.getUserName()).or(qUser.email.eq(userRegisterDto.getEmail())));
 
         for (User user : users) {
             if (user.getUserName().equals(userRegisterDto.getUserName())) {
-                return RegisterType.UserNameError;
+                throw new ClientError.HaveExistedException("用户名已被注册了... qwq");
             }
 
             if (user.getEmail().equals(userRegisterDto.getEmail())) {
-                return RegisterType.EmailError;
+                throw new ClientError.HaveExistedException("邮箱已被注册了... qwq");
             }
         }
 
-        return RegisterType.Ok;
-    }
-
-    public UserDto register(UserRegisterDto userRegisterDto) {
         User user = new User();
         String salt = UUID.randomUUID().toString();
 
@@ -100,7 +97,12 @@ public class UserService {
         return this.userRepository.findByEmail(email);
     }
 
-    public UserDto setAdmin(User user, boolean setIn){
+    public UserDto setAdmin(long userId, boolean setIn){
+        User user = this.userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            throw new ClientError.NotFindException("不存在的用户... qwq");
+        }
+
         user.setAdmin(setIn);
         return this.getUserDto(this.userRepository.save(user));
     }

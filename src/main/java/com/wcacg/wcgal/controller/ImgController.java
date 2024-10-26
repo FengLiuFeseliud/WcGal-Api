@@ -153,4 +153,38 @@ public class ImgController {
     public ResponseMessage<List<String>> uploadHead(@RequestParam("file") MultipartFile[] files) throws IOException {
         return this.upload(files, "/head/");
     }
+
+    /**
+     * 获取收藏夹封面图片, 带缩放
+     * @param fileName 文件名
+     * @param width 图片宽度
+     * @param height 图片高度
+     * @param scale 图片缩放比例
+     * @param quality 图片质量
+     * @param response 响应头
+     * @return 图片字节
+     * @throws IOException IO 错误
+     */
+    @ResponseBody
+    @RequestMapping(value  = "/cover/favorite/{fileName}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getCoverFavorite(@PathVariable String fileName,
+                          @RequestParam(value = "width", required = false, defaultValue = "0") int width,
+                          @RequestParam(value = "height", required = false, defaultValue = "0") int height,
+                          @RequestParam(value = "scale", required = false, defaultValue = "0") float scale,
+                          @RequestParam(value = "quality", required = false, defaultValue = "0") float quality,
+                          HttpServletResponse response) throws IOException {
+        return this.getImgByte("/cover/favorite/" + fileName, width, height, scale, quality, response);
+    }
+
+    /**
+     * 上传收藏夹封面图片
+     * @param files 图片数组
+     * @return 图片路径
+     * @throws IOException IO 错误
+     */
+    @NeedToken
+    @PostMapping("/cover/favorite/upload")
+    public ResponseMessage<List<String>> uploadCoverFavorite(@RequestParam("file") MultipartFile[] files) throws IOException {
+        return this.upload(files, "/cover/favorite/");
+    }
 }

@@ -1,11 +1,13 @@
 package com.wcacg.wcgal.entity.dto.article;
 
 import com.wcacg.wcgal.entity.dto.ArticleTagDto;
+import com.wcacg.wcgal.entity.dto.favorite.FavoriteItemDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.tomcat.util.buf.StringUtils;
 
 import java.util.Date;
+import java.util.List;
 
 public class ArticleDto {
     private Long articleId;
@@ -21,6 +23,8 @@ public class ArticleDto {
     private Long likes;
     private Long views;
     private Long favorites;
+    private FavoriteItemDto likeItem;
+    private List<FavoriteItemDto> favoriteItems;
 
     public Long getArticleId() {
         return articleId;
@@ -124,5 +128,21 @@ public class ArticleDto {
 
     public void setFavorites(Long favorites) {
         this.favorites = favorites;
+    }
+
+    public FavoriteItemDto getLikeItem() {
+        return likeItem;
+    }
+
+    public void setLikeItem(FavoriteItemDto likeItem) {
+        this.likeItem = likeItem;
+    }
+
+    public List<FavoriteItemDto> getFavoriteItems() {
+        return favoriteItems;
+    }
+
+    public void setFavoriteItems(List<FavoriteItemDto> favoriteItems) {
+        this.favoriteItems = favoriteItems;
     }
 }

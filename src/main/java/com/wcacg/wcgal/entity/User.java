@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,6 +33,9 @@ public class User extends AbstractTimeEntity {
 
     @Column(name = "head")
     private String head;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "createUser")
+    private List<Favorite> favorites;
 
     public User() {}
 
@@ -94,4 +96,12 @@ public class User extends AbstractTimeEntity {
     }
 
     public void setHead(String head) {}
+
+    public List<Favorite> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(List<Favorite> favorites) {
+        this.favorites = favorites;
+    }
 }

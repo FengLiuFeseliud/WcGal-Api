@@ -46,4 +46,12 @@ public class TokenUtils {
         DecodedJWT jwt = JWT.require(Algorithm.HMAC256(tokenKey)).build().verify(token);
         return jwt.getClaim("user_id").asLong();
     }
+
+    public static long decodedTokenUserIdOrNotUserId(HttpServletRequest request){
+        try{
+            return decodedTokenUserId(request);
+        } catch (JWTVerificationException exception){
+            return 0;
+        }
+    }
 }

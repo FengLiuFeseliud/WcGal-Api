@@ -1,10 +1,7 @@
 package com.wcacg.wcgal.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.wcacg.wcgal.entity.Article;
-import com.wcacg.wcgal.entity.ArticleTags;
-import com.wcacg.wcgal.entity.QArticle;
-import com.wcacg.wcgal.entity.User;
+import com.wcacg.wcgal.entity.*;
 import com.wcacg.wcgal.entity.dto.ArticleTagDto;
 import com.wcacg.wcgal.entity.dto.PageDto;
 import com.wcacg.wcgal.entity.dto.SearchDto;
@@ -12,9 +9,12 @@ import com.wcacg.wcgal.entity.dto.TagsDto;
 import com.wcacg.wcgal.entity.dto.article.ArticleAddDto;
 import com.wcacg.wcgal.entity.dto.article.ArticleDto;
 import com.wcacg.wcgal.entity.dto.article.ArticleInfoDto;
+import com.wcacg.wcgal.entity.dto.favorite.FavoriteItemDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
+import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.ArticleRepository;
 import com.wcacg.wcgal.repository.ArticleTagsRepository;
+import com.wcacg.wcgal.repository.FavoriteItemRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,10 +31,13 @@ import java.util.stream.StreamSupport;
 public class ArticleService implements IArticleService, IArticleTagService {
     private final ArticleRepository articleRepository;
     private final ArticleTagsRepository articleTagsRepository;
+    private final FavoriteItemRepository favoriteItemRepository;
 
-    public ArticleService(ArticleRepository articleRepository, ArticleTagsRepository articleTagsRepository) {
+    public ArticleService(ArticleRepository articleRepository, ArticleTagsRepository articleTagsRepository,
+        FavoriteItemRepository favoriteItemRepository) {
         this.articleRepository = articleRepository;
         this.articleTagsRepository = articleTagsRepository;
+        this.favoriteItemRepository = favoriteItemRepository;
     }
 
     private ArticleDto articleToArticleDto(Article article){
@@ -60,13 +63,9 @@ public class ArticleService implements IArticleService, IArticleTagService {
 
     @Override
     public ArticleDto updateArticle(ArticleAddDto articleDto) {
-        if (articleDto.getArticleId() == null || articleDto.getArticleId() == 0){
-            return null;
-        }
-
         Article article = articleRepository.findById(articleDto.getArticleId()).orElse(null);
         if (article == null){
-            return null;
+            throw new ClientError.NotFindException("文章id " + articleDto.getArticleId() + " 不存在... qwq");
         }
 
         this.addArticleTag(new TagsDto(Arrays.stream(
@@ -124,9 +123,51 @@ public class ArticleService implements IArticleService, IArticleTagService {
         return articleDtoList;
     }
 
+    public List<FavoriteItemDto> findArticleTagsToFavoriteItemDtoList(Page<FavoriteItem> favoriteItemPage) {
+        List<FavoriteItemDto> favoriteItemList = new ArrayList<>();
+        List<String> allTagNames = new ArrayList<>();
+
+        favoriteItemPage.forEach(favoriteItem -> allTagNames.addAll(List.of(favoriteItem.getArticle().getTags().split(","))));
+        List<ArticleTags> allTags = (List<ArticleTags>) this.getArticleTagsByTagNames(allTagNames.toArray(new String[0]));
+        favoriteItemPage.forEach(favoriteItem -> {
+            ArticleInfoDto articleInfoDto = new ArticleInfoDto();
+            List<String> tagNames = List.of(favoriteItem.getArticle().getTags().split(","));
+            BeanUtils.copyProperties(toArticleDto(favoriteItem.getArticle(),
+                    allTags.stream().filter(tag -> tagNames.contains(tag.getTagName()))), articleInfoDto);
+            FavoriteItemDto favoriteItemDto = new FavoriteItemDto();
+            BeanUtils.copyProperties(favoriteItem, favoriteItemDto);
+            favoriteItemDto.setArticle(articleInfoDto);
+            favoriteItemList.add(favoriteItemDto);
+        });
+        return favoriteItemList;
+    }
+
     @Override
-    public Article getArticle(Long articleId) {
-        return articleRepository.findById(articleId).orElse(null);
+    public ArticleDto getArticle(Long articleId, Long userId) {
+        Article article = articleRepository.findById(articleId).orElse(null);
+        if (article == null){
+            throw new ClientError.NotFindException("文章id " + articleId + " 不存在... qwq");
+        }
+        article.setViews(article.getViews() + 1);
+        QFavoriteItem qFavoriteItem = QFavoriteItem.favoriteItem;
+        if (userId == 0){
+            return this.findArticleTagsToArticleDto(this.articleRepository.save(article));
+        }
+
+        ArticleDto articleDto = this.findArticleTagsToArticleDto(this.articleRepository.save(article));
+        Iterable<FavoriteItem> favoriteItems = this.favoriteItemRepository.findAll(qFavoriteItem.article.articleId.eq(articleId)
+                .and(qFavoriteItem.favoriteUserId.eq(userId)));
+
+        List<FavoriteItemDto> favoriteItemDtoList = new ArrayList<>();
+        favoriteItems.forEach(favoriteItem -> {
+            FavoriteItemDto favoriteItemDto = new FavoriteItemDto();
+            favoriteItem.setArticleId(null);
+            BeanUtils.copyProperties(favoriteItem, favoriteItemDto);
+            favoriteItemDtoList.add(favoriteItemDto);
+        });
+
+        articleDto.setFavoriteItems(favoriteItemDtoList);
+        return articleDto;
     }
 
     @Override

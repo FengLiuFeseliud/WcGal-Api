@@ -1,6 +1,5 @@
 package com.wcacg.wcgal.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -23,7 +22,6 @@ public class Comment extends AbstractTimeEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "comment_author_id", referencedColumnName = "user_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User commentAuthor;
 
     @ColumnDefault("0")

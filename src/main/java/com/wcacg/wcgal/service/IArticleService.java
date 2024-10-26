@@ -10,7 +10,7 @@ public interface IArticleService {
     ArticleDto addArticle(ArticleAddDto article, long userId);
     ArticleDto updateArticle(ArticleAddDto articleDto);
     Long deleteArticle(Long id);
-    Article getArticle(Long id);
+    ArticleDto getArticle(Long id, Long userId);
     Page<Article> getArticles(PageDto pageDto);
     Long getCount();
 }

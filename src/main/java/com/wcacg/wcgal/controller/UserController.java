@@ -44,7 +44,7 @@ public class UserController {
      */
     @PostMapping("/{userId}")
     public ResponseMessage<UserDto> getUser(@PathVariable Long userId, HttpServletRequest request){
-        long tokenUserId = TokenUtils.decodedTokenUserId(request);
+        long tokenUserId = TokenUtils.decodedTokenUserIdOrNotUserId(request);
         UserDto userDto = this.userService.getUser(userId);
         if (tokenUserId != userDto.getUserId()){
             userDto.setEmail(null);
@@ -107,22 +107,13 @@ public class UserController {
         }
 
         session.removeAttribute("code");
-        switch (this.userService.canRegister(userRegisterDto)){
-            case EmailError -> {
-                return ResponseMessage.dataError("邮箱已被注册了... qwq", null);
-            }
-
-            case UserNameError -> {
-                return ResponseMessage.dataError("用户名已被注册了... qwq", null);
-            }
-        }
         return ResponseMessage.success(this.userService.register(userRegisterDto));
     }
 
     /**
      * 获取 token 用户信息
      * @param request 请求头
-     * @return 用户信息带
+     * @return 用户信息
      */
     @NeedToken
     @PostMapping("/info")
@@ -133,7 +124,8 @@ public class UserController {
             response.setHeader("Access-Control-Expose-Headers", "token");
             response.setHeader("token", TokenUtils.getToken(120, user));
         }
-        return ResponseMessage.success(this.userService.getUser(TokenUtils.decodedTokenUserId(request)));
+        user.setFavorites(null);
+        return ResponseMessage.success(user);
     }
 
     /**
@@ -162,25 +154,27 @@ public class UserController {
         return ResponseMessage.success(null);
     }
 
+    /**
+     * 设置用户为管理员
+     * @param userId 用户id
+     * @return 用户信息
+     */
     @NeedAdmin
     @NeedToken
     @PostMapping("/admin/set/{userId}")
     public ResponseMessage<UserDto> setAdmin(@PathVariable Long userId){
-        User user = this.userService.getUserFill(userId);
-        if (user == null) {
-            return ResponseMessage.dataError("不存在的用户... qwq", null);
-        }
-        return ResponseMessage.success(this.userService.setAdmin(user, true));
+        return ResponseMessage.success(this.userService.setAdmin(userId, true));
     }
 
+    /**
+     * 取消用户为管理员
+     * @param userId 用户id
+     * @return 用户信息
+     */
     @NeedAdmin
     @NeedToken
     @PostMapping("/admin/undo/{userId}")
     public ResponseMessage<UserDto> undoAdmin(@PathVariable Long userId){
-        User user = this.userService.getUserFill(userId);
-        if (user == null) {
-            return ResponseMessage.dataError("不存在的用户... qwq", null);
-        }
-        return ResponseMessage.success(this.userService.setAdmin(user, false));
+        return ResponseMessage.success(this.userService.setAdmin(userId, false));
     }
 }

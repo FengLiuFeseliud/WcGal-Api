@@ -5,7 +5,7 @@ import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
-import com.wcacg.wcgal.entity.message.LoginMessage;
+import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.UserRepository;
 import com.wcacg.wcgal.utils.TimeUtils;
 import com.wcacg.wcgal.utils.TokenUtils;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 
@@ -37,12 +36,6 @@ public class TokenInterceptor implements HandlerInterceptor {
         this.userRepository = userRepository;
     }
 
-    private boolean TokenError(HttpServletResponse response) throws IOException {
-        response.setContentType("application/json;charset=utf-8");
-        response.getWriter().print(this.mapper.writeValueAsString(LoginMessage.error()));
-        return false;
-    }
-
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!(handler instanceof HandlerMethod handlerMethod)) {
@@ -57,7 +50,7 @@ public class TokenInterceptor implements HandlerInterceptor {
         String token = request.getHeader("token");
         if (token == null) {
             // 没有 token
-            return this.TokenError(response);
+            throw new ClientError.NotTokenException("你还没未登录呢 ...");
         }
 
         Map<String, String> tokenData;
@@ -65,7 +58,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             tokenData = TokenUtils.decodedToken(token);
         } catch (Exception e) {
             // token 验证失败
-            return this.TokenError(response);
+            throw new ClientError.NotTokenException("你还没未登录呢 ...");
         }
 
         long exp = Long.parseLong(tokenData.get("exp"));
@@ -74,7 +67,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             User user = userRepository.findById(Long.valueOf(tokenData.get("user_id"))).orElse(null);
             if (user == null){
                 // token 验证失败
-                return this.TokenError(response);
+                throw new ClientError.NotTokenException("你还没未登录呢 ...");
             }
 
             UserDto userDto = new UserDto();
@@ -92,9 +85,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         if (!tokenData.get("admin").equals("true")){
             // 不是 admin
-            response.setContentType("application/json;charset=utf-8");
-            response.getWriter().print(mapper.writeValueAsString(LoginMessage.errorAdmin()));
-            return false;
+            throw new ClientError.NotPermissionsException("你没有权限...");
         }
 
         return true;

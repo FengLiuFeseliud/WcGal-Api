@@ -13,7 +13,6 @@ import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.service.ArticleService;
 import com.wcacg.wcgal.utils.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Null;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,11 +35,7 @@ public class GalGameArticleController {
      */
     @PostMapping("/{articleId}")
     public ResponseMessage<ArticleDto> get(@PathVariable Long articleId, HttpServletRequest request){
-        Article article = service.getArticle(articleId);
-        if (article == null) {
-            return ResponseMessage.dataError("文章id " + articleId + " 不存在... qwq", null);
-        }
-        return ResponseMessage.success(service.findArticleTagsToArticleDto(article));
+        return ResponseMessage.success(service.getArticle(articleId, TokenUtils.decodedTokenUserIdOrNotUserId(request)));
     }
 
     /**
@@ -62,11 +57,7 @@ public class GalGameArticleController {
     @NeedToken
     @PostMapping("/update")
     public ResponseMessage<ArticleDto> update(@Validated @RequestBody ArticleAddDto articleDto){
-        ArticleDto article = service.updateArticle(articleDto);
-        if (article == null) {
-            return ResponseMessage.dataError("文章 id 错误了...", null);
-        }
-        return ResponseMessage.success(article);
+        return ResponseMessage.success(service.updateArticle(articleDto));
     }
 
     /**
@@ -100,11 +91,6 @@ public class GalGameArticleController {
     public PageMessage<ArticleInfoDto> search(@Validated @RequestBody SearchDto pageDto){
         Page<Article> page = service.searchArticles(pageDto);
         return PageMessage.success(page, service.findArticleTagsToArticleDtoList(page));
-    }
-
-    @PostMapping("/favorite")
-    public ResponseMessage<Null> favorite(){
-        return ResponseMessage.success(null);
     }
 
     /**
@@ -144,4 +130,6 @@ public class GalGameArticleController {
     public ResponseMessage<List<ArticleTags>> allTags(){
         return ResponseMessage.success(service.getAllArticleTags());
     }
+
+
 }

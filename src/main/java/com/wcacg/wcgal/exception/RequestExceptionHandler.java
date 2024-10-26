@@ -1,5 +1,6 @@
 package com.wcacg.wcgal.exception;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -75,5 +76,35 @@ public class RequestExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseMessage<?> entityNotFoundException(EntityNotFoundException exception) {
         return new ResponseMessage<>(HttpStatus.NOT_FOUND.value(), exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(JWTVerificationException.class)
+    public ResponseMessage<?> entityNotFoundException(JWTVerificationException exception) {
+        return new ResponseMessage<>(HttpStatus.FORBIDDEN.value(), "你还没未登录呢 ...", null);
+    }
+
+    @ExceptionHandler(ClientError.NotTokenException.class)
+    public ResponseMessage<?> entityNotFoundException(ClientError.NotTokenException exception) {
+        return new ResponseMessage<>(HttpStatus.FORBIDDEN.value(), exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(ClientError.NotFindException.class)
+    public ResponseMessage<?> entityNotFoundException(ClientError.NotFindException exception) {
+        return new ResponseMessage<>(HttpStatus.NOT_FOUND.value(), exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(ClientError.MaxCreateException.class)
+    public ResponseMessage<?> entityNotFoundException(ClientError.MaxCreateException exception) {
+        return new ResponseMessage<>(HttpStatus.BAD_REQUEST.value(), exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(ClientError.NotPermissionsException.class)
+    public ResponseMessage<?> entityNotFoundException(ClientError.NotPermissionsException exception) {
+        return new ResponseMessage<>(HttpStatus.FORBIDDEN.value(), exception.getMessage(), null);
+    }
+
+    @ExceptionHandler(ClientError.HaveExistedException.class)
+    public ResponseMessage<?> entityNotFoundException(ClientError.HaveExistedException exception) {
+        return new ResponseMessage<>(HttpStatus.BAD_REQUEST.value(), exception.getMessage(), null);
     }
 }

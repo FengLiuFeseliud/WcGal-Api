@@ -8,11 +8,11 @@ import com.wcacg.wcgal.entity.dto.comment.CommentDelDto;
 import com.wcacg.wcgal.entity.dto.comment.CommentDto;
 import com.wcacg.wcgal.entity.dto.comment.CommentUpdateDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
+import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.ArticleRepository;
 import com.wcacg.wcgal.repository.CommentRepository;
 import com.wcacg.wcgal.repository.SubCommentRepository;
 import com.wcacg.wcgal.service.type.ResourceType;
-import com.wcacg.wcgal.service.type.ServiceErrorType;
 import com.wcacg.wcgal.utils.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
@@ -40,19 +40,7 @@ public class CommentService {
     }
 
     public Page<? extends Comment> getComments(String resourceId, PageDto pageDto){
-        String[] resourceIds =  resourceId.split("_");
-        if (resourceIds.length != 2){
-            return null;
-        }
-
-        long id = Long.parseLong(resourceIds[1]);
-        if (resourceIds[0].equals(ResourceType.ARTICLE.getName())){
-            if (this.articleRepository.findById(id).isEmpty()){
-                return null;
-            }
-        }
-
-        if (resourceIds[0].equals(ResourceType.COMMENT.getName())){
+        if (ResourceType.getType(resourceId) == ResourceType.COMMENT){
             BooleanExpression be = QComment.comment.resourceId.eq(resourceId);
             if (pageDto.getDesc() == null){
                 return this.subCommentRepository.findAll(be, PageRequest.of(pageDto.getPage(), pageDto.getLimit()));
@@ -97,10 +85,10 @@ public class CommentService {
         return comments;
     }
 
-    public Comment addArticleComment(CommentAddDto commentAddDto, long userId){
+    public CommentDto addArticleComment(CommentAddDto commentAddDto, long userId){
         Article article = this.articleRepository.findById(ResourceType.getId(commentAddDto.getResourceId())).orElse(null);
         if (article == null){
-            return null;
+            throw new ClientError.NotFindException("文章资源id " + commentAddDto.getResourceId() + " 不存在... qwq");
         }
 
         if (commentAddDto.getCommentId() > 0){
@@ -116,13 +104,13 @@ public class CommentService {
 
         article.setComments(article.getComments() + 1);
         this.articleRepository.save(article);
-        return comment;
+        return this.commentToCommentDto(comment);
     }
 
-    public Comment addArticleSubComment(CommentAddDto commentAddDto, Article article, long userId) {
+    public CommentDto addArticleSubComment(CommentAddDto commentAddDto, Article article, long userId) {
         MainComment comment = this.commentRepository.findById(commentAddDto.getCommentId()).orElse(null);
         if (comment == null || !comment.getResourceId().equals(commentAddDto.getResourceId())){
-            return null;
+            throw new ClientError.NotFindException("评论id " + commentAddDto.getCommentId() + " 不存在... qwq");
         }
 
         Comment subComment = new Comment();
@@ -133,94 +121,81 @@ public class CommentService {
         comment.getSubComment().add(subComment);
 
         this.subCommentRepository.save(subComment);
-        this.commentRepository.save(comment);
+        comment = this.commentRepository.save(comment);
 
         article.setComments(article.getComments() + 1);
         this.articleRepository.save(article);
-        return subComment;
+        return this.commentToCommentDto(comment);
     }
 
-    private ServiceErrorType canSetComment(Comment comment, HttpServletRequest request){
+    private boolean canSetComment(Comment comment, HttpServletRequest request){
         Map<String, String> tokenData = TokenUtils.decodedToken(request);
-        if (!tokenData.get("admin").equals("true")
-                && comment.getCommentAuthor().getUserId() != Long.parseLong(tokenData.get("user_id"))){
-            return ServiceErrorType.NOT_PERMISSIONS;
-        }
-        return ServiceErrorType.OK;
+        return tokenData.get("admin").equals("true")
+                || comment.getCommentAuthor().getUserId() == Long.parseLong(tokenData.get("user_id"));
     }
 
-    private ServiceErrorType delMainComment(CommentDelDto commentDelDto, HttpServletRequest request, Consumer<Long> consumer){
+    private void delMainComment(CommentDelDto commentDelDto, HttpServletRequest request, Consumer<Long> consumer){
         MainComment comment = this.commentRepository.findById(commentDelDto.getCommentId()).orElse(null);
         if (comment == null){
-            return ServiceErrorType.NOT_FIND;
+            throw new ClientError.NotFindException("评论id " + commentDelDto.getCommentId() + " 不存在... qwq");
         }
 
         if (!comment.getResourceId().equals(commentDelDto.getResourceId())){
-            return ServiceErrorType.NOT_FIND;
+            throw new ClientError.NotFindException("资源id " + commentDelDto.getResourceId() + " 不存在... qwq");
         }
 
-        if (this.canSetComment(comment, request) != ServiceErrorType.OK){
-            return ServiceErrorType.NOT_PERMISSIONS;
+        if (!this.canSetComment(comment, request)){
+            throw new ClientError.NotPermissionsException("你只能删除自己的评论...");
         }
 
         long count = comment.getSubComment().size() + 1;
         this.subCommentRepository.deleteAll(comment.getSubComment());
         this.commentRepository.delete(comment);
         consumer.accept(count);
-        return ServiceErrorType.OK;
     }
 
-    public ServiceErrorType delArticleComment(CommentDelDto commentDelDto, HttpServletRequest request){
+    public void delArticleComment(CommentDelDto commentDelDto, HttpServletRequest request){
         Article article = this.articleRepository.findById(ResourceType.getId(commentDelDto.getResourceId())).orElse(null);
         if (article == null){
-            return ServiceErrorType.NOT_FIND;
+            throw new ClientError.NotFindException("文章资源id " + commentDelDto.getResourceId() + " 不存在... qwq");
         }
 
-        ServiceErrorType type = this.delMainComment(commentDelDto, request, count ->
-                article.setComments(article.getComments() - count));
-        if (type!= ServiceErrorType.OK){
-            return type;
-        }
-
+        this.delMainComment(commentDelDto, request, count -> article.setComments(article.getComments() - count));
         this.articleRepository.save(article);
-        return type;
     }
 
-    public ServiceErrorType delSubComment(CommentDelDto commentDelDto, HttpServletRequest request) {
+    public void delSubComment(CommentDelDto commentDelDto, HttpServletRequest request) {
         Comment comment = this.subCommentRepository.findById(commentDelDto.getCommentId()).orElse(null);
         if (comment == null){
-            return ServiceErrorType.NOT_FIND;
+            throw new ClientError.NotFindException("评论id " + commentDelDto.getCommentId() + " 不存在... qwq");
         }
 
-        if (this.canSetComment(comment, request) != ServiceErrorType.OK){
-            return ServiceErrorType.NOT_PERMISSIONS;
+        if (!this.canSetComment(comment, request)){
+            throw new ClientError.NotPermissionsException("你只能删除自己的评论...");
         }
 
         this.subCommentRepository.delete(comment);
-        return ServiceErrorType.OK;
     }
 
-    public ServiceErrorType updateComment(CommentUpdateDto commentUpdateDto, HttpServletRequest request) {
+    public CommentDto updateComment(CommentUpdateDto commentUpdateDto, HttpServletRequest request) {
         Comment comment = this.commentRepository.findById(commentUpdateDto.getCommentId()).orElse(null);
         if (comment == null){
             comment = this.subCommentRepository.findById(commentUpdateDto.getCommentId()).orElse(null);
         }
 
         if (comment == null){
-            return ServiceErrorType.NOT_FIND;
+            throw new ClientError.NotFindException("评论id " + commentUpdateDto.getCommentId() + " 不存在... qwq");
         }
 
-        if (this.canSetComment(comment, request) != ServiceErrorType.OK){
-            return ServiceErrorType.NOT_PERMISSIONS;
+        if (!this.canSetComment(comment, request)){
+            throw new ClientError.NotPermissionsException("你只能编辑自己的评论...");
         }
 
         comment.setContent(commentUpdateDto.getContent());
         comment.setUpdateTime(null);
         if (comment instanceof MainComment){
-            this.commentRepository.save((MainComment) comment);
-        } else  {
-            this.subCommentRepository.save(comment);
+            return this.commentToCommentDto(this.commentRepository.save((MainComment) comment));
         }
-        return ServiceErrorType.OK;
+        return this.commentToCommentDto(this.subCommentRepository.save(comment));
     }
 }

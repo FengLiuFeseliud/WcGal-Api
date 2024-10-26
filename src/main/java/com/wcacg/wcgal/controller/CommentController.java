@@ -11,7 +11,6 @@ import com.wcacg.wcgal.entity.message.PageMessage;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.service.CommentService;
 import com.wcacg.wcgal.service.type.ResourceType;
-import com.wcacg.wcgal.service.type.ServiceErrorType;
 import com.wcacg.wcgal.utils.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Null;
@@ -30,10 +29,10 @@ public class CommentController {
     }
 
     /**
-     *
+     * 获取资源评论
      * @param resourceId 资源 id (资源 id: 资源类型前两位_id)
      * @param pageDto 分页数据
-     * @return 响应状态消息
+     * @return 评论分页数据
      */
     @PostMapping("/{resourceId}")
     public PageMessage<CommentDto> getComments(@PathVariable String resourceId, @Validated @RequestBody PageDto pageDto){
@@ -52,50 +51,43 @@ public class CommentController {
      */
     @NeedToken
     @PostMapping("/send")
-    public ResponseMessage<Null> sendComment(@Validated @RequestBody CommentAddDto commentAddDto, HttpServletRequest request){
-        Comment comment = null;
+    public ResponseMessage<CommentDto> sendComment(@Validated @RequestBody CommentAddDto commentAddDto, HttpServletRequest request){
+        CommentDto comment = null;
         if (ResourceType.getType(commentAddDto.getResourceId()) == ResourceType.ARTICLE) {
             comment = this.commentService.addArticleComment(commentAddDto, TokenUtils.decodedTokenUserId(request));
-        }
-
-        if (comment == null){
-            return ResponseMessage.dataError("评论发送失败... qwq", null);
-        }
-        return ResponseMessage.success(null);
-    }
-
-    @NeedToken
-    @PostMapping("/update")
-    public ResponseMessage<Null> updateComment(@Validated @RequestBody CommentUpdateDto commentUpdateDto, HttpServletRequest request){
-        ServiceErrorType type = this.commentService.updateComment(commentUpdateDto, request);
-        if (type == ServiceErrorType.NOT_FIND){
-            return ResponseMessage.dataError("评论 " + commentUpdateDto.getCommentId() + " 不存在... qwq", null);
-        }
-
-        if(type == ServiceErrorType.NOT_PERMISSIONS){
-            return ResponseMessage.dataError("你只能修改自己的评论...", null);
-        }
-        return ResponseMessage.success(null);
-    }
-
-    @NeedToken
-    @PostMapping("/del")
-        public ResponseMessage<Null> del(@Validated @RequestBody CommentDelDto commentDelDto, HttpServletRequest request){
-        ServiceErrorType type;
-        if (ResourceType.getType(commentDelDto.getResourceId()) == ResourceType.ARTICLE) {
-            type = this.commentService.delArticleComment(commentDelDto, request);
-        } else if(ResourceType.getType(commentDelDto.getResourceId()) == ResourceType.COMMENT) {
-            type = this.commentService.delSubComment(commentDelDto, request);
         } else {
             return ResponseMessage.dataError("不存在的资源类型... qwq", null);
         }
+        return ResponseMessage.success(comment);
+    }
 
-        if (type == ServiceErrorType.NOT_FIND){
-            return ResponseMessage.dataError("资源id " + commentDelDto.getResourceId() + " 不存在... qwq", null);
-        }
+    /**
+     * 编辑评论
+     * @param commentUpdateDto 评论数据
+     * @param request 请求头
+     * @return 评论
+     */
+    @NeedToken
+    @PostMapping("/update")
+    public ResponseMessage<CommentDto> updateComment(@Validated @RequestBody CommentUpdateDto commentUpdateDto, HttpServletRequest request){
+        return ResponseMessage.success(this.commentService.updateComment(commentUpdateDto, request));
+    }
 
-        if(type == ServiceErrorType.NOT_PERMISSIONS){
-            return ResponseMessage.dataError("你只能删除自己的评论...", null);
+    /**
+     * 删除评论
+     * @param commentDelDto 评论数据
+     * @param request 请求头
+     * @return 响应状态消息
+     */
+    @NeedToken
+    @PostMapping("/del")
+        public ResponseMessage<Null> del(@Validated @RequestBody CommentDelDto commentDelDto, HttpServletRequest request){
+        if (ResourceType.getType(commentDelDto.getResourceId()) == ResourceType.ARTICLE) {
+            this.commentService.delArticleComment(commentDelDto, request);
+        } else if(ResourceType.getType(commentDelDto.getResourceId()) == ResourceType.COMMENT) {
+            this.commentService.delSubComment(commentDelDto, request);
+        } else {
+            return ResponseMessage.dataError("不存在的资源类型... qwq", null);
         }
         return ResponseMessage.success(null);
     }
