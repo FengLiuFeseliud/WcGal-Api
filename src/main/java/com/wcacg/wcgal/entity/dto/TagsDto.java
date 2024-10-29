@@ -1,10 +1,11 @@
 package com.wcacg.wcgal.entity.dto;
 
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
 
-import java.util.Arrays;
 import java.util.List;
 
+@Data
 public class TagsDto {
     @NotEmpty
     private List<String> tags;
@@ -14,14 +15,6 @@ public class TagsDto {
     }
 
     public TagsDto(List<String> tags) {
-        this.tags = tags;
-    }
-
-    public @NotEmpty List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(@NotEmpty List<String> tags) {
         this.tags = tags;
     }
 }

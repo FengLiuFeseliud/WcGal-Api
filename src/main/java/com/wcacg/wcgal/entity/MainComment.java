@@ -1,13 +1,17 @@
 package com.wcacg.wcgal.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@EqualsAndHashCode(callSuper = true)
 public class MainComment extends Comment {
 
     @OneToMany(fetch = FetchType.LAZY)
@@ -20,13 +24,5 @@ public class MainComment extends Comment {
 
     public MainComment(long commentId){
         this.setCommentId(commentId);
-    }
-
-    public List<Comment> getSubComment() {
-        return subComment;
-    }
-
-    public void setSubComment(List<Comment> subComment) {
-        this.subComment = subComment;
     }
 }

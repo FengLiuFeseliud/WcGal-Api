@@ -2,11 +2,12 @@ package com.wcacg.wcgal.entity.dto.favorite;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.URL;
 
+@Data
 public class FavoriteAddDto {
-
     @Length(min = 1, max = 50)
     @NotBlank
     private String favoriteName;
@@ -18,36 +19,4 @@ public class FavoriteAddDto {
 
     @URL
     private String cover;
-
-    public String getFavoriteName() {
-        return favoriteName;
-    }
-
-    public void setFavoriteName(String favoriteName) {
-        this.favoriteName = favoriteName;
-    }
-
-    public String getFavoriteDescribe() {
-        return favoriteDescribe;
-    }
-
-    public void setFavoriteDescribe(String favoriteDescribe) {
-        this.favoriteDescribe = favoriteDescribe;
-    }
-
-    public Boolean getFavoritePublic() {
-        return favoritePublic;
-    }
-
-    public void setFavoritePublic(Boolean favoritePublic) {
-        this.favoritePublic = favoritePublic;
-    }
-
-    public String getCover() {
-        return cover;
-    }
-
-    public void setCover(String cover) {
-        this.cover = cover;
-    }
 }

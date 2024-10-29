@@ -185,7 +185,7 @@ public class FavoriteService {
             FavoriteItem favoriteItem = new FavoriteItem();
             favoriteItem.setFavoriteId(favorite.getFavoriteId());
             favoriteItem.setResourceId(favoriteAddItemDto.getResourceId());
-            favoriteItem.setArticleId(article);
+            favoriteItem.setArticle(article);
             favoriteItem.setFavoriteUserId(userId);
             favorite.setSize(favorite.getSize() + 1);
             if (favorite.getInLike()){
@@ -280,7 +280,7 @@ public class FavoriteService {
         FavoriteItem favoriteItem = new FavoriteItem();
         favoriteItem.setFavoriteId(likeFavorite.getFavoriteId());
         favoriteItem.setResourceId(resourceId);
-        favoriteItem.setArticleId(article);
+        favoriteItem.setArticle(article);
         favoriteItem.setFavoriteUserId(userId);
         likeFavorite.setSize(likeFavorite.getSize() + 1);
         article.setLikes(article.getLikes() + 1);

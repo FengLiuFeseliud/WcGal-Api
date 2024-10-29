@@ -2,8 +2,13 @@ package com.wcacg.wcgal.entity.dto.user;
 
 import com.wcacg.wcgal.entity.dto.EmailDto;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.validator.constraints.Length;
 
+
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class ResetPasswordDto extends EmailDto {
     @Length(min = 8, max = 30)
     @NotBlank
@@ -12,20 +17,4 @@ public class ResetPasswordDto extends EmailDto {
     @Length(min = 6, max = 6)
     @NotBlank
     private String code;
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
 }

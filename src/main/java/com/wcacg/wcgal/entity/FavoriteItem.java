@@ -2,11 +2,13 @@ package com.wcacg.wcgal.entity;
 
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Date;
 
+@Data
 @Entity
 @Table(name = "tb_favorite_item")
 @EntityListeners(AuditingEntityListener.class)
@@ -32,36 +34,4 @@ public class FavoriteItem{
     @CreatedDate
     @Column(name = "create_time", nullable = false, updatable = false)
     protected Date createTime;
-
-    public Long getFavoriteId() {
-        return favoriteId;
-    }
-
-    public void setFavoriteId(Long favoriteId) {
-        this.favoriteId = favoriteId;
-    }
-
-    public String getResourceId() {
-        return resourceId;
-    }
-
-    public Long getFavoriteUserId() {
-        return favoriteUserId;
-    }
-
-    public void setFavoriteUserId(Long favoriteUserId) {
-        this.favoriteUserId = favoriteUserId;
-    }
-
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
-    }
-
-    public Article getArticle() {
-        return article;
-    }
-
-    public void setArticleId(Article article) {
-        this.article = article;
-    }
 }

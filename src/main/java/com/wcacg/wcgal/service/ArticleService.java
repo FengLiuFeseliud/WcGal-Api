@@ -161,7 +161,7 @@ public class ArticleService implements IArticleService, IArticleTagService {
         List<FavoriteItemDto> favoriteItemDtoList = new ArrayList<>();
         favoriteItems.forEach(favoriteItem -> {
             FavoriteItemDto favoriteItemDto = new FavoriteItemDto();
-            favoriteItem.setArticleId(null);
+            favoriteItem.setArticle(null);
             BeanUtils.copyProperties(favoriteItem, favoriteItemDto);
             favoriteItemDtoList.add(favoriteItemDto);
         });
