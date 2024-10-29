@@ -8,6 +8,7 @@ import com.wcacg.wcgal.entity.dto.comment.CommentDelDto;
 import com.wcacg.wcgal.entity.dto.comment.CommentDto;
 import com.wcacg.wcgal.entity.dto.comment.CommentUpdateDto;
 import com.wcacg.wcgal.entity.dto.user.UserInfoDto;
+import com.wcacg.wcgal.entity.dto.user.UserTokenDto;
 import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.ArticleRepository;
 import com.wcacg.wcgal.repository.CommentRepository;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 @Service
@@ -129,9 +129,8 @@ public class CommentService {
     }
 
     private boolean canSetComment(Comment comment, HttpServletRequest request){
-        Map<String, String> tokenData = TokenUtils.decodedToken(request);
-        return tokenData.get("admin").equals("true")
-                || comment.getCommentAuthor().getUserId() == Long.parseLong(tokenData.get("user_id"));
+        UserTokenDto userTokenDto = TokenUtils.decodedToken(request);
+        return !userTokenDto.isAdmin() && comment.getCommentAuthor().getUserId() != userTokenDto.getUserId();
     }
 
     private void delMainComment(CommentDelDto commentDelDto, HttpServletRequest request, Consumer<Long> consumer){
@@ -144,7 +143,7 @@ public class CommentService {
             throw new ClientError.NotFindException("资源id " + commentDelDto.getResourceId() + " 不存在... qwq");
         }
 
-        if (!this.canSetComment(comment, request)){
+        if (this.canSetComment(comment, request)){
             throw new ClientError.NotPermissionsException("你只能删除自己的评论...");
         }
 
@@ -170,7 +169,7 @@ public class CommentService {
             throw new ClientError.NotFindException("评论id " + commentDelDto.getCommentId() + " 不存在... qwq");
         }
 
-        if (!this.canSetComment(comment, request)){
+        if (this.canSetComment(comment, request)){
             throw new ClientError.NotPermissionsException("你只能删除自己的评论...");
         }
 
@@ -187,7 +186,7 @@ public class CommentService {
             throw new ClientError.NotFindException("评论id " + commentUpdateDto.getCommentId() + " 不存在... qwq");
         }
 
-        if (!this.canSetComment(comment, request)){
+        if (this.canSetComment(comment, request)){
             throw new ClientError.NotPermissionsException("你只能编辑自己的评论...");
         }
 

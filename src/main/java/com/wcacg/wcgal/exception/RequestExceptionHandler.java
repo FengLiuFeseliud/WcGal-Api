@@ -1,6 +1,5 @@
 package com.wcacg.wcgal.exception;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -48,7 +47,7 @@ public class RequestExceptionHandler {
             return ResponseMessage.error();
         }
         return new ResponseMessage<>(HttpStatus.BAD_REQUEST.value(),
-                fieldError.getField() + " 不能为 " + fieldError.getRejectedValue() + " 啦~ QwQ", fieldError.getRejectedValue());
+                fieldError.getField() + " " + fieldError.getDefaultMessage()+ "啦~ QwQ, ", null);
     }
 
     /**
@@ -78,14 +77,9 @@ public class RequestExceptionHandler {
         return new ResponseMessage<>(HttpStatus.NOT_FOUND.value(), exception.getMessage(), null);
     }
 
-    @ExceptionHandler(JWTVerificationException.class)
-    public ResponseMessage<?> entityNotFoundException(JWTVerificationException exception) {
-        return new ResponseMessage<>(HttpStatus.FORBIDDEN.value(), "你还没未登录呢 ...", null);
-    }
-
     @ExceptionHandler(ClientError.NotTokenException.class)
     public ResponseMessage<?> entityNotFoundException(ClientError.NotTokenException exception) {
-        return new ResponseMessage<>(HttpStatus.FORBIDDEN.value(), exception.getMessage(), null);
+        return new ResponseMessage<>(HttpStatus.UNAUTHORIZED.value(), exception.getMessage(), null);
     }
 
     @ExceptionHandler(ClientError.NotFindException.class)

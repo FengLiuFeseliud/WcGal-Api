@@ -1,15 +1,25 @@
 package com.wcacg.wcgal.entity.dto.article;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.URL;
 
 public class ArticleAddDto {
     private Long articleId;
+
     @NotBlank
+    @Length(min = 1, max = 50)
     private String articleTitle;
+
     @NotBlank
     private String articleContent;
+
+    @URL
     @NotBlank
     private String cover;
+
+    @Size(max = 30)
     private String[] tags;
 
     public Long getArticleId() {

@@ -2,10 +2,12 @@ package com.wcacg.wcgal.entity.dto.favorite;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.Length;
 
 import java.util.List;
 
 public class FavoriteSetItemDto {
+    @Length(min = 1, max = 31)
     @NotNull
     private List<Long> favoriteIds;
 

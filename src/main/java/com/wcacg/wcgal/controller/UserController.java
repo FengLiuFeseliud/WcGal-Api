@@ -4,10 +4,7 @@ import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.EmailDto;
-import com.wcacg.wcgal.entity.dto.user.ResetPasswordDto;
-import com.wcacg.wcgal.entity.dto.user.UserDto;
-import com.wcacg.wcgal.entity.dto.user.UserLoginDto;
-import com.wcacg.wcgal.entity.dto.user.UserRegisterDto;
+import com.wcacg.wcgal.entity.dto.user.*;
 import com.wcacg.wcgal.entity.message.ResponseMessage;
 import com.wcacg.wcgal.service.UserService;
 import com.wcacg.wcgal.utils.TokenUtils;
@@ -21,8 +18,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -85,7 +80,7 @@ public class UserController {
             return ResponseMessage.dataError("登录失败... qwq", null);
         }
 
-        user.setToken(TokenUtils.getToken(120, user));
+        user.setToken(TokenUtils.getToken(user));
         return ResponseMessage.success(user);
     }
 
@@ -118,11 +113,11 @@ public class UserController {
     @NeedToken
     @PostMapping("/info")
     public ResponseMessage<UserDto> resetToken(HttpServletRequest request, HttpServletResponse  response){
-        Map<String, String> tokenData = TokenUtils.decodedToken(request);
-        UserDto user = this.userService.getUser(Long.parseLong(tokenData.get("user_id")));
-        if (user.isAdmin() != Boolean.parseBoolean(tokenData.get("admin"))){
+        UserTokenDto userTokenDto = TokenUtils.decodedToken(request);
+        UserDto user = this.userService.getUser(userTokenDto.getUserId());
+        if (user.isAdmin() != userTokenDto.isAdmin()){
             response.setHeader("Access-Control-Expose-Headers", "token");
-            response.setHeader("token", TokenUtils.getToken(120, user));
+            response.setHeader("token", TokenUtils.getToken(user));
         }
         user.setFavorites(null);
         return ResponseMessage.success(user);

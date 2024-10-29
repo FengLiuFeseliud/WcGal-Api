@@ -38,7 +38,10 @@ public class Favorite extends AbstractTimeEntity {
     @Column(name = "in_like", nullable = false)
     private Boolean inLike;
 
-    public Favorite(){}
+    public Favorite(){
+        this.inLike = false;
+        this.size = 0;
+    }
 
     public Favorite(String favoriteName, long userId, boolean inLike){
         this.favoriteName = favoriteName;

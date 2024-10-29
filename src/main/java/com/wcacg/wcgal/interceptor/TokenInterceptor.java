@@ -5,9 +5,9 @@ import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
+import com.wcacg.wcgal.entity.dto.user.UserTokenDto;
 import com.wcacg.wcgal.exception.ClientError;
 import com.wcacg.wcgal.repository.UserRepository;
-import com.wcacg.wcgal.utils.TimeUtils;
 import com.wcacg.wcgal.utils.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,9 +15,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import java.util.Date;
-import java.util.Map;
 
 
 /**
@@ -47,34 +44,18 @@ public class TokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String token = request.getHeader("token");
-        if (token == null) {
-            // 没有 token
-            throw new ClientError.NotTokenException("你还没未登录呢 ...");
-        }
-
-        Map<String, String> tokenData;
-        try {
-            tokenData = TokenUtils.decodedToken(token);
-        } catch (Exception e) {
-            // token 验证失败
-            throw new ClientError.NotTokenException("你还没未登录呢 ...");
-        }
-
-        long exp = Long.parseLong(tokenData.get("exp"));
-        if (TimeUtils.isEffectiveDate(new Date(System.currentTimeMillis() / 1000), new Date(exp - 30), new Date(exp))) {
+        UserTokenDto userTokenDto = TokenUtils.decodedToken(request);
+        if (TokenUtils.canResetToken(userTokenDto)) {
             // token 续签
-            User user = userRepository.findById(Long.valueOf(tokenData.get("user_id"))).orElse(null);
+            User user = userRepository.findById(userTokenDto.getUserId()).orElse(null);
             if (user == null){
-                // token 验证失败
                 throw new ClientError.NotTokenException("你还没未登录呢 ...");
             }
 
             UserDto userDto = new UserDto();
             BeanUtils.copyProperties(user, userDto);
-            token = TokenUtils.getToken(120, userDto);
             response.setHeader("Access-Control-Expose-Headers", "token");
-            response.setHeader("token", token);
+            response.setHeader("token", TokenUtils.getToken(userDto));
         }
 
         // admin 验证
@@ -83,7 +64,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (!tokenData.get("admin").equals("true")){
+        if (userTokenDto.isAdmin()){
             // 不是 admin
             throw new ClientError.NotPermissionsException("你没有权限...");
         }
