@@ -1,7 +1,6 @@
 package com.wcacg.wcgal.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.user.UserDto;
@@ -59,8 +58,7 @@ public class TokenInterceptor implements HandlerInterceptor {
         }
 
         // admin 验证
-        NeedAdmin needAdmin = handlerMethod.getMethodAnnotation(NeedAdmin.class);
-        if (needAdmin == null) {
+        if (!needToken.admin()){
             return true;
         }
 

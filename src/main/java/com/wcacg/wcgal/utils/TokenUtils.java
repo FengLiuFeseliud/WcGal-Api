@@ -7,20 +7,36 @@ import com.wcacg.wcgal.entity.dto.user.UserDto;
 import com.wcacg.wcgal.entity.dto.user.UserTokenDto;
 import com.wcacg.wcgal.exception.ClientError;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import org.paseto4j.commons.PasetoException;
 import org.paseto4j.commons.SecretKey;
 import org.paseto4j.commons.Version;
 import org.paseto4j.version4.Paseto;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-@Service
+@Component
 public class TokenUtils {
-    private static final String secret = "WfvKvfSqJRKkGRe54NvNyH9M4HAyHNwd";
-    private static final String footer = "WC-GALGAME-TOKEN";
+    @Getter
+    private static String SECRET;
+
+    @Getter
+    private static String FOOTER;
+
+    @Value("${app.token.secret}")
+    public void setSecret(String secret){
+        SECRET = secret;
+    }
+
+    @Value("${app.token.footer:WC-TOKEN")
+    public void setFooter(String footer){
+        FOOTER = footer;
+    }
 
     public static String getToken(UserDto user) {
         JsonMapper mapper = new JsonMapper();
@@ -30,8 +46,8 @@ public class TokenUtils {
         BeanUtils.copyProperties(user, userTokenDto);
         userTokenDto.setExpiresDate(new Date(System.currentTimeMillis() + 1000L * 60 * 120));
         try {
-            return Paseto.encrypt(new SecretKey(secret.getBytes(StandardCharsets.UTF_8), Version.V4),
-                    mapper.writeValueAsString(userTokenDto), footer);
+            return Paseto.encrypt(new SecretKey(SECRET.getBytes(StandardCharsets.UTF_8), Version.V4),
+                    mapper.writeValueAsString(userTokenDto), FOOTER);
         } catch (PasetoException | JsonProcessingException e) {
             throw new ClientError.NotTokenException("token 创建失败");
         }
@@ -41,10 +57,10 @@ public class TokenUtils {
         JsonMapper mapper = new JsonMapper();
         mapper.registerModule(new JavaTimeModule());
 
-        UserTokenDto userTokenDto = null;
+        UserTokenDto userTokenDto;
         try {
             userTokenDto = mapper.readValue(Paseto.decrypt(new SecretKey(
-                    secret.getBytes(StandardCharsets.UTF_8), Version.V4), token, footer), UserTokenDto.class);
+                    SECRET.getBytes(StandardCharsets.UTF_8), Version.V4), token, FOOTER), UserTokenDto.class);
         } catch (PasetoException | JsonProcessingException e) {
             throw new ClientError.NotTokenException("你还没未登录呢 ...");
         }
@@ -61,6 +77,14 @@ public class TokenUtils {
             throw new ClientError.NotTokenException("你还没未登录呢 ...");
         }
         return TokenUtils.decodedToken(token);
+    }
+
+    public static @Nullable UserTokenDto decodedTokenOrNull(HttpServletRequest request){
+        try {
+            return TokenUtils.decodedToken(request);
+        } catch (ClientError.NotTokenException e) {
+            return null;
+        }
     }
 
     public static long decodedTokenUserId(HttpServletRequest request){

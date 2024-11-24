@@ -1,5 +1,6 @@
 package com.wcacg.wcgal.entity;
 
+import com.wcacg.wcgal.service.UserService;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -45,6 +47,15 @@ public class User extends AbstractTimeEntity {
 
     public User(long userId) {
         this.userId = userId;
+    }
+
+    public User(String userName, String email, String password, boolean admin){
+        this.userName = userName;
+        this.email = email;
+        this.admin = admin;
+
+        this.salt = UUID.randomUUID().toString();
+        this.password = UserService.strMd5(password, salt);
     }
 
     public String getHead() {

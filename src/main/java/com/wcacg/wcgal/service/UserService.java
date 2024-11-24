@@ -22,8 +22,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public String strMd5(String str, String salt) {
-        return DigestUtils.md5Hex(DigestUtils.sha256(str + salt));
+    public static String strMd5(String str, String salt) {
+        return DigestUtils.md5Hex(DigestUtils.sha256(DigestUtils.md5Hex(DigestUtils.sha256(str + salt))));
     }
 
     private UserDto getUserDto(User user) {
@@ -46,7 +46,7 @@ public class UserService {
             throw new ClientError.NotFindException("不存在的用户... qwq");
         }
 
-        if (!Objects.equals(user.getPassword(), this.strMd5(userLoginDto.getPassword(), user.getSalt()))) {
+        if (!Objects.equals(user.getPassword(), strMd5(userLoginDto.getPassword(), user.getSalt()))) {
             throw new ClientError.NotPermissionsException("密码错误... qwq");
         }
 
@@ -73,7 +73,7 @@ public class UserService {
         String salt = UUID.randomUUID().toString();
 
         BeanUtils.copyProperties(userRegisterDto, user);
-        user.setPassword(this.strMd5(userRegisterDto.getPassword(), salt));
+        user.setPassword(strMd5(userRegisterDto.getPassword(), salt));
         user.setSalt(salt);
         userRepository.save(user);
         user.setSalt("");
@@ -81,7 +81,7 @@ public class UserService {
     }
 
     public void resetPassword(User user, String password) {
-        user.setPassword(this.strMd5(password, user.getSalt()));
+        user.setPassword(strMd5(password, user.getSalt()));
         userRepository.save(user);
     }
 

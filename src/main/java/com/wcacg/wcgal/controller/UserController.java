@@ -1,6 +1,5 @@
 package com.wcacg.wcgal.controller;
 
-import com.wcacg.wcgal.annotation.NeedAdmin;
 import com.wcacg.wcgal.annotation.NeedToken;
 import com.wcacg.wcgal.entity.User;
 import com.wcacg.wcgal.entity.dto.EmailDto;
@@ -154,8 +153,7 @@ public class UserController {
      * @param userId 用户id
      * @return 用户信息
      */
-    @NeedAdmin
-    @NeedToken
+    @NeedToken(admin = true)
     @PostMapping("/admin/set/{userId}")
     public ResponseMessage<UserDto> setAdmin(@PathVariable Long userId){
         return ResponseMessage.success(this.userService.setAdmin(userId, true));
@@ -166,8 +164,7 @@ public class UserController {
      * @param userId 用户id
      * @return 用户信息
      */
-    @NeedAdmin
-    @NeedToken
+    @NeedToken(admin = true)
     @PostMapping("/admin/undo/{userId}")
     public ResponseMessage<UserDto> undoAdmin(@PathVariable Long userId){
         return ResponseMessage.success(this.userService.setAdmin(userId, false));
